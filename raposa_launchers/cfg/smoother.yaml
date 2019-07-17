@@ -1,0 +1,12 @@
+smoother:
+  max_linear_vel: 0.7 #Default params
+  min_linear_vel: 0.1 #Default params 
+  
+  max_rot_vel: 1.2
+  min_rot_vel: 0.1
+
+  linear_max_acc: 0.4
+  linear_max_dacc: 0.7
+  
+  angular_max_acc: 0.6
+  angular_max_dacc: 0.6

@@ -70,22 +70,28 @@ class IDMindNavigation:
         ###########################
         max_default = 0.9*self.max_robot_vel
         self.control_freq = rospy.get_param("/move_base/controller_frequency", default=20.)
-        self.max_vel_x = rospy.get_param("/move_base/TrajectoryPlannerROS/max_vel_x", default=max_default)
-        self.min_vel_x = rospy.get_param("/move_base/TrajectoryPlannerROS/min_vel_x", default=0.1)
+        
+
         if self.kinematics == "omni":
             self.max_vel_y = rospy.get_param("/move_base/TrajectoryPlannerROS/max_vel_y", default=max_default)
             self.min_vel_y = rospy.get_param("/move_base/TrajectoryPlannerROS/min_vel_y", default=0.1)
         else:
             self.max_vel_y = 0
             self.min_vel_y = 0
-        self.max_rot_vel = rospy.get_param("/move_base/TrajectoryPlannerROS/max_vel_theta", default=max_default)
-        self.min_rot_vel = rospy.get_param("/move_base/TrajectoryPlannerROS/min_vel_theta", default=0.1)
-        # Real acceleration is reduced - this gives better results.
-        self.max_acc = rospy.get_param("/move_base/TrajectoryPlannerROS/acc_lim_x", default=0.4)
-        self.max_rot_acc = rospy.get_param("/move_base/TrajectoryPlannerROS/acc_lim_theta", default=0.4)
 
-        self.max_dacc = -self.max_acc * 2.0
-        self.max_rot_dacc = self.max_rot_acc * 2.0  # Stay positive
+        self.max_vel_x = rospy.get_param("smoother/max_lin_vel", default=max_default)
+        self.min_vel_x = rospy.get_param("smoother/min_lin_vel", default=0.1)
+
+        self.max_rot_vel = rospy.get_param("smoother/max_rot_vel", default=max_default)
+        self.min_rot_vel = rospy.get_param("smoother/min_rot_vel", default=0.1)
+
+        # Real acceleration is reduced - this gives better results.
+        self.max_acc = rospy.get_param("smoother/linear_max_acc", default=0.4)
+        self.max_rot_acc = rospy.get_param("smoother/angular_max_acc", default=0.4)
+
+        self.max_dacc = -1*rospy.get_param("smoother/linear_max_dacc", default=0.8)
+        self.max_rot_dacc = rospy.get_param("smoother/angular_max_dacc", default=0.4)
+        #self.max_rot_dacc = self.max_rot_acc * 2.0  # Stay positive
 
         #######################
         #  Navigation Topics  #
