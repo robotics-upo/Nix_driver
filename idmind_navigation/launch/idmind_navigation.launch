@@ -1,0 +1,5 @@
+<launch>
+    <arg name="controller" default="joystick" />
+    <node pkg="idmind_navigation" type="navigation_node.py" name="navigation_node" output="screen" />
+    <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen" />
+</launch>

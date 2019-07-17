@@ -1,0 +1,19 @@
+#Move Base parameters
+move_base:
+  base_global_planner: "navfn/NavfnROS"                          # Choices: "global_planner/GlobalPlanner", "navfn/NavfnROS", "carrot_planner/CarrotPlanner"
+  base_local_planner: "dwa_local_planner::DWAPlannerROS"         # Choices "base_local_planner/TrajectoryPlannerROS" "dwa_local_planner::DWAPlannerROS", "eband_local_planner/EBandPlannerROS", "teb_local_planner"
+  recovery_behaviour_enabled: true
+  recovery_behaviours: [{name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery},
+                        {name: rotate_recovery, type: rotate_recovery/RotateRecovery},
+                        {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}]
+  controller_frequency: 20              # Control Loop frequency
+  planner_patience: 5.0                 # Time to find a valid plan before space clearing operations
+  controller_patience: 10.0             # Time to receive valid control before space clearing operations
+  conservative_reset_dist: 3.0          # Distance from robot that will be cleared of obstacles
+  clearing_rotation_allowed: true       # Recovery behaviour of rotating to update costmap
+  shutdown_costmaps: false              # Stop costmaps if move_base is inactive
+  oscillation_timeout: 5.0              # Time allowed for oscillations before recovery is started (0. is never)
+  oscillation_distance: 0.5             # Distance before restarting oscilation flags
+  planner_frequency: 0.0                # Frequency for the planner to be run
+  max_planning_retries: -1              # Number of tries before issuing a failure. -1 is try forever
+

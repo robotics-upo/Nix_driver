@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="testing_imu" type="testing_imu.py" name="testing_imu" output="screen"/>
+</launch>

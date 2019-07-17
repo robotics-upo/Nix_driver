@@ -1,0 +1,125 @@
+# Local planners
+TrajectoryPlannerROS:
+  # Robot Configuration
+
+  acc_lim_x: 0.3                  # Maximum acceleration allowed for x direction, in m/s^2
+  acc_lim_y: 0.                   # Maximum acceleration allowed for y direction, in m/s^2 (holonomic only)
+  acc_lim_theta: 0.5              # Maximum acceleration allowed for rotation, in rad/s^2
+
+  max_vel_x: 0.5                  # Maximum velocity allowed for x direction, in m/s
+  min_vel_x: 0.2                  # Minimum velocity for motors to respond for x direction, in m/s (should be positive)
+  max_vel_theta: 1.0              # Maximum velocity allowed for rotation, in rad/s (should be max_vel_x/base_radius)
+  min_in_place_vel_theta: 0.6     # Minimum velocity for motors to respond for rotation, in rad/s
+  min_in_place_rotational_vel: 0.6 # Minimum velocity for motors to respond for rotation, in rad/s (There is a bug with names)
+  escape_vel: -0.1                # Escape velocity, in m/s - should be negative
+
+  holonomic_robot: false
+  y_vels: [-0.5, -0.1, 0.1, 0.5]  # Strafing velocities considered by the robot, in m/s
+
+  # Goal Tolerance
+  yaw_goal_tolerance: 0.05        # Maximum tolerance for the rotation when achieving a goal
+  xy_goal_tolerance: 0.15         # Maximum tolerance for the position when achieving a goal
+  latch_xy_goal_tolerance: true   # If true, the robot will only rotate in place after achieving the goal position, even if it ends outside the tolerance
+
+  # Forward Simulation
+  sim_time: 1.                    # Amount of time to forward-simulate trajectories in seconds
+  sim_granularity: 0.025          # The step size, in meters, to take between points on a given trajectory
+  angular_sim_granularity: 0.025  # The step size, in radians, to take between angular samples on a given trajectory
+  vx_samples: 3                   # The number of samples to use when exploring the x velocity space
+  vtheta_samples: 20              # The number of samples to use when exploring the theta velocity space
+  # controller_frequency: 20      # Reads it from move_base parameters, unless specified
+
+  # Trajectory Scoring
+  meter_scoring: true             # Distance measured in cells if false, meters if true
+  pdist_scale: 0.9                # Weight of keeping in the path (maximum of 5.0)
+  gdist_scale: 0.6                # Weight of closing in to the goal (maximum of 5.0)
+  occdist_scale: 0.02             # Weight of avoiding obstacles
+  heading_lookahead: 0.325        # How far to look when scoring in place rotations, in meters
+  heading_scoring: false          # Scores based on robot heading to path (true) or distance to path (false)
+  heading_scoring_timestep: 0.8   # How much to look ahead when heading scoring, in seconds
+  dwa: false                      # Whether use DWA or Traj. Rollout - DWA first, TJ for low acceleration robots
+  publish_cost_grid_pc: true
+  global_frame_id: "/map"         # The frame to set for the cost_cloud. Should be set to the same frame as the local costmap's global frame
+
+  oscillation_reset_dist: 0.05
+  prune_plan: true
+
+#DWAPlannerROS:
+#  # Robot configuration
+#  acc_lim_x: 0.3                  # Maximum acceleration allowed for x direction, in m/s^2
+#  acc_lim_y: 0.                   # Maximum acceleration allowed for y direction, in m/s^2 (holonomic only)
+#  acc_lim_th: 0.5                 # Maximum acceleration allowed for rotation, in rad/s^2
+#  max_trans_vel: 0.5              # Maximum translational velocity in m/s
+#  min_trans_vel: 0.2              # Minimmum translational velocity in m/s
+#  max_vel_x: 0.5
+#  min_vel_x: 0.2
+#  max_vel_y: 0.0
+#  min_vel_y: 0.0
+#  max_rot_vel: 1.0
+#  min_rot_vel: 0.6
+#  # Goal Tolerance
+#  yaw_goal_tolerance: 0.05        # Maximum tolerance for the rotation when achieving a goal
+#  xy_goal_tolerance: 0.15         # Maximum tolerance for the position when achieving a goal
+#  latch_xy_goal_tolerance: true   # If true, the robot will only rotate in place after achieving the goal position, even if it ends outside the tolerance
+#  # Forward Simulation
+#  sim_time: 1.                    # Amount of time to forward-simulate trajectories in seconds
+#  sim_granularity: 0.025          # The step size, in meters, to take between points on a given trajectory
+#  angular_sim_granularity: 0.025  # The step size, in radians, to take between angular samples on a given trajectory
+#  vx_samples: 3                   # The number of samples to use when exploring the x velocity space
+#  vy_samples: 10                  # The number of samples to use when exploring the y velocity space
+#  vth_samples: 20              # The number of samples to use when exploring the theta velocity space
+#  # controller_frequency: 20      # Reads it from move_base parameters, unless specified
+#  # Trajectory Scoring
+#  path_distance_bias: 32
+#  goal_distance_bias: 24
+#  occdist_scale: 0.01
+#  forward_point_distance: 0.325
+#  stop_time_buffer: 0.2
+#  scaling_speed: 0.25
+#  max_scaling_factor: 0.2
+#  publish_cost_grid: false
+#
+#  oscillation_reset_dist: 0.05
+#  prune_plan: true
+
+DWAPlannerROS:
+  max_vel_x: 0.6
+  min_vel_x: 0.0
+  max_vel_y: 0.0
+  min_vel_y: -0.0
+  max_trans_vel: 0.7
+  min_trans_vel: 0.3
+  max_rot_vel: 1.0
+  min_rot_vel: 0.6
+  acc_lim_th: 0.6
+  acc_lim_theta: 0.8
+  acc_lim_x: 0.6
+  acc_lim_y: 0
+  acc_limit_trans: 0.6
+
+  angular_sim_granularity: 0.1
+  forward_point_distance: 0.5
+  global_frame_id: /map
+  goal_distance_bias: 20.0
+  latch_xy_goal_tolerance: true
+  max_scaling_factor: 0.2
+  occdist_scale: 0.4
+  oscillation_reset_angle: 0.2
+  oscillation_reset_dist: 0.05
+  path_distance_bias: 36.0
+  prune_plan: true
+  publish_cost_grid_pc: true
+  publish_traj_pc: true
+  restore_defaults: false
+  rot_stopped_vel: 0.05
+  scaling_speed: 0.25
+  sim_granularity: 0.025
+  sim_time: 1.7
+  stop_time_buffer: 0.2
+  trans_stopped_vel: 0.05
+  use_dwa: true,
+  vth_samples: 15
+  vx_samples: 6
+  vy_samples: 3
+  xy_goal_tolerance: 0.1
+  yaw_goal_tolerance: 0.05

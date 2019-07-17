@@ -1,0 +1,51 @@
+<launch>
+    <!-- Launch file for all the nodes responsible for hardware communication and control-->
+
+    <!-- Load parameters that are needed for these node (might duplicate loading, but necessary for independent usage of this launch file -->
+    <!-- Load configuration from YAML (might be duplicated) -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+    <!-- Launch motors and sensors boards -->
+    <include file="$(find idmind_motorsboard)/launch/idmind_motorsboard.launch" />
+    <include file="$(find idmind_sensorsboard)/launch/idmind_sensorsboard.launch" />
+
+    <!-- Launch IMU -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 -0.10 0 3.14 0 0 base_link base_link_imu" />
+    <include file="$(find idmind_imu)/launch/idmind_imu.launch">
+        <arg name="imu" value="razor" />
+    </include>
+
+    <!-- Launch Lasers -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="front_laser_broadcaster" args="-0.01 0 0.35 0 0 0 base_link front_laser" />
+
+    <arg name="laser_ydlidar" value="true" />
+    <arg name="laser_urg" value="false" />
+    <group if="$(arg laser_ydlidar)">
+        <!-- stuff that will only be evaluated if foo is true -->
+        <include file="$(find ydlidar)/launch/lidar_raposa.launch" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="back_laser_broadcaster" args="-0.28 0 0.195 3.14 0 0 base_link back_laser" />
+<!--        <node pkg="urg_node" type="urg_node" name="laser" respawn="true" respawn_delay="2" >-->
+<!--            <param name="frame_id" type="string" value="front_laser" />-->
+<!--            <param name="angle_min" type="double" value="-1.74" />-->
+<!--            <param name="angle_max" type="double" value="1.74" />-->
+<!--            <param name="ip_address" type="string" value="192.168.0.10" />-->
+<!--        </node>-->
+    </group>
+
+    <group if="$(arg laser_urg)">
+        <!-- URG Node for Back Laser. Check validity of udev rule before. Change static_transform_publisher appropriately -->
+        <node pkg="urg_node" type="urg_node" name="front_laser" respawn="true" respawn_delay="2" >
+            <remap from="scan" to="front_scan" />
+            <param name="frame_id" type="string" value="front_laser" />
+            <param name="angle_min" type="double" value="-1.74" />
+            <param name="angle_max" type="double" value="1.74" />
+            <param name="dev" type="string" value="/dev/hokuyo" />
+            <!--        <param name="dev" type="string" value="/dev/idmind-hokuyoH0508483" />-->
+        </node>
+    </group>
+
+
+    <!-- Launch camera -->
+<!--    <include file="$(find idmind_camera)/launch/idmind_camera.launch" />-->
+
+</launch>

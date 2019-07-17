@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>idmind_serial2</name>
+    <version>1.0.0</version>
+    <description>The idmind_serial package, to communicate with serial devices</description>
+
+    <maintainer email="cneves@idmind.pt">Carlos Neves</maintainer>
+    <maintainer email="hpovoa@idmind.pt">Henrique Póvoa</maintainer>
+
+    <license>TODO</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- ROS -->
+    <depend>rospy</depend>
+    <!-- IDMind -->
+    <!-- Python -->
+    <exec_depend>python-pyserial</exec_depend>
+
+</package>

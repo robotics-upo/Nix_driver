@@ -1,0 +1,27 @@
+<launch>
+    <!-- launch motorsboard -->
+    <include file="$(find testing_motorsboard)/launch/testing_motorsboard.launch" />
+
+    <!-- launch IMU -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 0.10 0 3.14 0 0 base_link base_link_imu" />
+<!--    <include file="$(find testing_imu)/launch/testing_imu.launch" />-->
+    <include file="$(find idmind_imu)/launch/idmind_imu.launch" />
+
+        <!-- Launch Lasers -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="front_laser_broadcaster" args="-0.01 0 0.35 0 0 0 base_link front_laser" />
+<!--    <include file="$(find ydlidar)/launch/lidar_raposa.launch" />-->
+    <node pkg="urg_node" type="urg_node" name="front_laser" respawn="true" respawn_delay="2" >
+        <remap from="scan" to="front_scan" />
+<!--        <remap from="scan" to="scan2" />-->
+        <param name="frame_id" type="string" value="front_laser" />
+<!--        <param name="frame_id" type="string" value="back_laser" />-->
+        <param name="angle_min" type="double" value="-1.74" />
+        <param name="angle_max" type="double" value="1.74" />
+        <param name="dev" type="string" value="/dev/hokuyo" />
+<!--        <param name="dev" type="string" value="/dev/idmind-hokuyoH0508483" />-->
+        <param name="frequency"    type="double" value="2"/> <!-- default is 7-->
+
+    </node>
+
+    <node pkg="testing_navigation" type="testing_navigation.py" name="testing_navigation" output="screen"/>
+</launch>

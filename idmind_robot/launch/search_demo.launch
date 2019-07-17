@@ -1,0 +1,42 @@
+<launch>
+
+    <!-- Define real/simulation and controller type -->
+    <arg name="config" value="search_rescue" />
+    <param name="controller" type="string" value="joystick" />                           <!-- Controller - joystick, move_base or controller -->
+    <param name="simulation" type="bool" value="false" />                   <!-- Define if it will run on a robot or simulation -->
+
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+    <!-- Start hardware-->
+    <include file="$(find idmind_robot)/launch/start_hardware.launch" />
+
+    <!-- Start Navigation -->
+    <include file="$(find idmind_navigation)/launch/idmind_navigation.launch">
+        <arg name="controller" value="$(arg controller)" />
+    </include>
+
+    <!-- Start GMapping -->
+        <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen" >
+        <remap from="/scan" to="/front_scan" />
+        <param name="base_frame" value="base_link" />
+        <param name="map_frame" value="map" />
+        <param name="odom_frame" value="odom" />
+        <param name="map_update_interval" value="5" />
+        <param name="maxUrange" value="16" />
+        <param name="xmin" value="-50" />
+        <param name="xmax" value="50" />
+        <param name="ymin" value="-50" />
+        <param name="ymax" value="50" />
+        <param name="delta" value="0.05" />
+        <param name="maxRange" value="14" />
+    </node>
+
+
+    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch" />
+
+    <!-- Launch rosbridge for web apps -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="8080"/>
+    </include>
+</launch>

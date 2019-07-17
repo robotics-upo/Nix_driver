@@ -1,0 +1,4 @@
+std_msgs/Header header
+int32 arm_position
+int32 right_wheel_velocity
+int32 left_wheel_velocity

@@ -1,0 +1,5 @@
+bool electronic_relay
+bool motor_relay
+bool cable_relay
+---
+bool success

@@ -1,0 +1,123 @@
+<launch>
+    <!-- Define initial positions for AMCL (or other localization package) -->
+    <!-- RAPOSA raposa_idmind -->
+    <arg name="initial_pose_x" value="15.85" />
+    <arg name="initial_pose_y" value="3.94" />
+    <arg name="initial_pose_a" value="0." />
+    <arg name="initial_cov_xx" value="0.25" />
+    <arg name="initial_cov_yy" value="0.25" />
+    <arg name="initial_cov_aa" value="0.25" />
+
+    <!-- Define real/simulation and controller type -->
+    <arg name="config" value="raposa_idmind" />
+    <arg name="controller" value="move_base" />                            <!-- Controller - joystick, move_base or controller -->
+    <param name="simulation" type="bool" value="false" />                   <!-- Define if it will run on a robot or simulation -->
+    <param name="controller" type="string" value="$(arg controller)" />
+
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+
+    <!--    START HARDWARE-->
+        <!-- Launch file for all the nodes responsible for hardware communication and control-->
+
+        <!-- Load parameters that are needed for these node (might duplicate loading, but necessary for independent usage of this launch file -->
+        <!-- Load configuration from YAML (might be duplicated) -->
+        <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+        <!--    START MOTORSBOARD-->
+        <!-- Load configuration from YAML -->
+        <rosparam command="load" file="$(find idmind_motorsboard)/cfg/idmind_motors.yaml" />
+        <node pkg="testing_ros_navigation" type="testing_motorcontrol.py" name="testing_motorcontrol" output="screen"/>
+
+        <!--    START SENSORSBOARD-->
+        <node pkg="testing_sensorsboard" type="testing_sensors.py" name="testing_sensors" output="screen" />
+
+        <!-- Launch IMU -->
+        <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 0 0 3.14 0 0 base_link base_link_imu" />
+        <include file="$(find testing_imu)/launch/testing_imu.launch" />
+        <!-- Launch Lasers -->
+        <node pkg="tf2_ros" type="static_transform_publisher" name="front_laser_broadcaster" args="-0.01 0 0.35 0 0 0 base_link front_laser" />
+
+        <arg name="laser_ydlidar" value="true" />
+        <arg name="laser_urg" value="false" />
+        <group if="$(arg laser_ydlidar)">
+            <node name="ydlidar_node"  pkg="ydlidar"  type="ydlidar_node" output="screen">
+                <remap from="scan" to="front_scan" />
+                <param name="port"         type="string" value="/dev/ydlidar"/>
+                <param name="baudrate"     type="int"    value="230400"/>
+                <param name="frame_id"     type="string" value="front_laser"/>
+                <param name="angle_fixed"  type="bool"   value="true"/>
+                <param name="low_exposure" type="bool"   value="false"/>
+                <param name="heartbeat"    type="bool"   value="false"/>
+                <param name="resolution_fixed"    type="bool"   value="true"/>
+                <param name="angle_min"    type="double" value="-180" />
+                <param name="angle_max"    type="double" value="180" />
+                <param name="range_min"    type="double" value="0.08" />
+                <param name="range_max"    type="double" value="16.0" />
+                <param name="ignore_array" type="string" value="" />
+                <param name="samp_rate"    type="int"    value="9"/>
+                <param name="frequency"    type="double" value="12"/> <!-- default is 7-->
+            </node>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="back_laser_broadcaster" args="-0.28 0 0.195 3.14 0 0 base_link back_laser" />
+        </group>
+
+        <group if="$(arg laser_urg)">
+            <!-- URG Node for Back Laser. Check validity of udev rule before. Change static_transform_publisher appropriately -->
+            <node pkg="urg_node" type="urg_node" name="front_laser" respawn="true" respawn_delay="2" >
+                <remap from="scan" to="front_scan" />
+                <param name="frame_id" type="string" value="front_laser" />
+                <param name="angle_min" type="double" value="-1.74" />
+                <param name="angle_max" type="double" value="1.74" />
+                <param name="dev" type="string" value="/dev/hokuyo" />
+                <!--        <param name="dev" type="string" value="/dev/idmind-hokuyoH0508483" />-->
+            </node>
+        </group>
+
+    <!--    START NAVIGATION    -->
+<!--        <node pkg="testing_ros_navigation" type="testing_motorcontrol.py" name="testing_motorcontrol" output="screen" />-->
+        <node pkg="testing_ros_navigation" type="testing_odometry.py" name="testing_odometry" output="screen" />
+
+
+    <!--START CONTROLLER-->
+        <!-- Load configuration from YAML -->
+        <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+        <!-- Run the map server -->
+        <node name="map_server" pkg="map_server" type="map_server" args="$(find idmind_controller)/maps/$(arg config)/mapa.yaml" output="screen" />
+        <node name="map_server_obs" pkg="map_server" type="map_server" args="$(find idmind_controller)/maps/$(arg config)/mapa_obs.yaml" output="screen" >
+<!--            <remap from="/map" to="/map_obs" />-->
+        </node>
+
+        <!-- Start the AMCL - Adaptive Monte Carlo Localization -->
+        <include file="$(find idmind_controller)/launch/amcl.launch">
+            <arg name="initial_pose_x" value="$(arg initial_pose_x)" />
+            <arg name="initial_pose_y" value="$(arg initial_pose_y)" />
+            <arg name="initial_pose_a" value="$(arg initial_pose_a)" />
+            <arg name="initial_cov_xx" value="$(arg initial_cov_xx)" />
+            <arg name="initial_cov_yy" value="$(arg initial_cov_yy)" />
+            <arg name="initial_cov_aa" value="$(arg initial_cov_aa)" />
+        </include>
+
+            <!--        MOVE BASE   -->
+            <node pkg="move_base" type="move_base" name="move_base" respawn="false" output="screen">
+                <remap from="/map" to="/map_obs" />
+                <!-- <remap from="/cmd_vel" to="/cmd_vel_idmind" /> -->
+                <rosparam file="$(find idmind_controller)/cfg/mbase_defaults.yaml" command="load" />
+                <rosparam file="$(find idmind_controller)/cfg/global_defaults.yaml" command="load" />
+                <rosparam file="$(find idmind_controller)/cfg/local_defaults.yaml" command="load" />
+                <rosparam file="$(find idmind_controller)/cfg/localplanner_defaults.yaml" command="load" />
+                <rosparam file="$(find idmind_controller)/cfg/globalplanner_defaults.yaml" command="load" />
+
+                <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/base_local_planner_params.yaml" command="load" />-->
+                <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_common_params.yaml" command="load" ns="local_costmap"/>-->
+                <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_common_params.yaml" command="load" ns="global_costmap"/>-->
+                <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_global_params.yaml" command="load" />-->
+                <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_local_params.yaml" command="load" />-->
+            </node>
+
+
+
+<!--    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch" />-->
+
+</launch>

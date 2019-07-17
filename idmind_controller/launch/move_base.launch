@@ -1,0 +1,19 @@
+<launch>
+
+    <node pkg="move_base" type="move_base" name="move_base" respawn="false" output="screen">
+        <remap from="/map" to="/map_obs" />
+        <!-- <remap from="/cmd_vel" to="/cmd_vel_idmind" /> -->
+        <rosparam file="$(find idmind_controller)/cfg/mbase_defaults.yaml" command="load" />
+        <rosparam file="$(find idmind_controller)/cfg/global_defaults.yaml" command="load" />
+        <rosparam file="$(find idmind_controller)/cfg/local_defaults.yaml" command="load" />
+        <rosparam file="$(find idmind_controller)/cfg/localplanner_defaults.yaml" command="load" />
+        <rosparam file="$(find idmind_controller)/cfg/globalplanner_defaults.yaml" command="load" />
+
+        <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/base_local_planner_params.yaml" command="load" />-->
+        <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_common_params.yaml" command="load" ns="local_costmap"/>-->
+        <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_common_params.yaml" command="load" ns="global_costmap"/>-->
+        <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_global_params.yaml" command="load" />-->
+        <!--<rosparam file="$(find idmind_navigation)/cfg/old_cfg/costmap_local_params.yaml" command="load" />-->
+    </node>
+
+</launch>

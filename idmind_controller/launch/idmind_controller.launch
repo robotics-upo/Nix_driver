@@ -1,0 +1,40 @@
+<launch>
+    <!-- Configuration passed by start launch file -->
+    <arg name="config" default="raposa_idmind" />         <!-- Define the name of the configuration (map, locations) -->
+    <arg name="controller" default="joystick" />   <!-- Define if we use joystick, move_base or idmind_controller -->
+
+    <arg name="initial_pose_x" default="0." />
+    <arg name="initial_pose_y" default="0." />
+    <arg name="initial_pose_a" default="0." />
+    <arg name="initial_cov_xx" default="1." />
+    <arg name="initial_cov_yy" default="1." />
+    <arg name="initial_cov_aa" default="1." />
+
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+    <!-- Run the map server -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find idmind_controller)/maps/$(arg config)/mapa.yaml" output="screen" />
+    <node name="map_server_obs" pkg="map_server" type="map_server" args="$(find idmind_controller)/maps/$(arg config)/mapa_obs.yaml" output="screen" >
+        <remap from="/map" to="/map_obs" />
+    </node>
+
+    <!-- Start the AMCL - Adaptive Monte Carlo Localization -->
+    <include file="$(find idmind_controller)/launch/amcl.launch">
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)" />
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)" />
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)" />
+        <arg name="initial_cov_xx" value="$(arg initial_cov_xx)" />
+        <arg name="initial_cov_yy" value="$(arg initial_cov_yy)" />
+        <arg name="initial_cov_aa" value="$(arg initial_cov_aa)" />
+    </include>
+
+    <!-- Start MoveBase, for planning -->
+    <include file="$(find idmind_controller)/launch/move_base.launch" />
+
+    <!-- Start the lasers analysis node, controller and recovery node and the interface -->
+    <node pkg="idmind_controller" type="idmind_lasers.py" name="idmind_lasers" output="screen" />
+    <node pkg="idmind_controller" type="controller_node.py" name="controller_node" output="screen" />
+    <node pkg="idmind_controller" type="idmind_recovery.py" name="idmind_recovery" output="screen" />
+    <node pkg="idmind_controller" type="controller_interface.py" name="controller_interface" output="screen" />
+</launch>

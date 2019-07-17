@@ -1,0 +1,46 @@
+<launch>
+    <!-- Define initial positions for AMCL (or other localization package) -->
+    <!-- RAPOSA raposa_idmind -->
+    <arg name="initial_pose_x" value="15.85" />
+    <arg name="initial_pose_y" value="3.94" />
+    <arg name="initial_pose_a" value="0." />
+    <arg name="initial_cov_xx" value="0.25" />
+    <arg name="initial_cov_yy" value="0.25" />
+    <arg name="initial_cov_aa" value="0.25" />
+
+    <!-- Define real/simulation and controller type -->
+    <arg name="config" value="raposa_idmind" />
+    <arg name="controller" value="controller" />                            <!-- Controller - joystick, move_base or controller -->
+    <param name="simulation" type="bool" value="false" />                   <!-- Define if it will run on a robot or simulation -->
+    <param name="controller" type="string" value="$(arg controller)" />
+
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+    <!-- Start hardware-->
+    <include file="$(find idmind_robot)/launch/start_hardware.launch" />
+
+    <!-- Start Navigation -->
+    <include file="$(find idmind_navigation)/launch/idmind_navigation.launch">
+        <arg name="controller" value="$(arg controller)" />
+    </include>
+
+    <!-- Start Controller -->       
+    <include file="$(find idmind_controller)/launch/idmind_controller.launch">
+        <arg name="config" value="$(arg config)" />
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)" />
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)" />
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)" />
+        <arg name="initial_cov_xx" value="$(arg initial_cov_xx)" />
+        <arg name="initial_cov_yy" value="$(arg initial_cov_yy)" />
+        <arg name="initial_cov_aa" value="$(arg initial_cov_aa)" />
+    </include>
+
+    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch" />
+    <!-- Launch rosbridge for web apps -->
+<!--   
+ <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="8080"/>
+    </include>
+    -->
+</launch>

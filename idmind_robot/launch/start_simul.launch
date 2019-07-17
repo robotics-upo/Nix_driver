@@ -1,0 +1,64 @@
+<launch>
+    <!-- Define initial positions for AMCL (or other localization package) and GAZEBO-->
+    <!-- Simulation raposa_idmind -->
+    <arg name="initial_pose_x" value="41.05" />
+    <arg name="initial_pose_y" value="15.20" />
+    <!-- Simulation narrow_corridor -->
+    <!--<arg name="initial_pose_x" value="18.0" />-->
+    <!--<arg name="initial_pose_y" value="3.16" />-->
+    <arg name="initial_pose_a" value="0." />
+    <arg name="initial_cov_xx" value="0.25" />
+    <arg name="initial_cov_yy" value="0.25" />
+    <arg name="initial_cov_aa" value="0.25" />
+    <arg name="gazebo_pose_x" value="15." />
+    <arg name="gazebo_pose_y" value="0.0" />
+
+    <!-- Define real/simulation and controller type -->
+    <arg name="config" value="raposa_idmind" />
+    <!--<arg name="config" value="narrow_corridor" />-->
+    <arg name="controller" value="controller" />            <!-- Controller - joystick, move_base or controller -->
+    <param name="simulation" type="bool" value="true" />                 <!-- Define if it will run on a robot or simulation -->
+    <param name="controller" type="string" value="$(arg controller)" />
+
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+
+    <!-- Launch static broadcasters of sensors and joystick node -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="front_laser_broadcaster" args="-0.01 0 0.35 0 0 0 base_link front_laser" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 0 0 3.14 0 0 base_link base_link_imu" />
+    <!-- Launch gazebo-->
+    <include file="$(find raposa_gazebo)/launch/raposa_gazebo.launch" >
+        <arg name="world" value="$(arg config)" />
+        <!-- for raposa_idmind -->
+        <arg name="initial_pose_x" value="$(arg gazebo_pose_x)" />
+        <arg name="initial_pose_y" value="$(arg gazebo_pose_y)" />
+    </include>
+    <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+        <remap from="scan" to="raw_front_scan" />
+        <remap from="scan_filtered" to="front_scan" />
+        <rosparam command="load" file="$(find idmind_controller)/cfg/laser_filter_config.yaml" />
+    </node>
+
+    <!-- Start Navigation/Odometry -->
+    <include file="$(find idmind_navigation)/launch/idmind_navigation.launch">
+        <arg name="controller" value="$(arg controller)" />
+    </include>
+
+    <!-- Start Controller -->
+    <include file="$(find idmind_controller)/launch/idmind_controller.launch">
+        <arg name="config" value="$(arg config)_simul" />
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)" />
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)" />
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)" />
+        <arg name="initial_cov_xx" value="$(arg initial_cov_xx)" />
+        <arg name="initial_cov_yy" value="$(arg initial_cov_yy)" />
+        <arg name="initial_cov_aa" value="$(arg initial_cov_aa)" />
+    </include>
+
+    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch" />
+
+    <!-- Launch rosbridge for web apps -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="8080"/>
+    </include>
+</launch>

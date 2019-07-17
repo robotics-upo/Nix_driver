@@ -1,0 +1,7 @@
+image: mapa_obs.pgm
+resolution: 0.05
+origin: [10.7020000, 8.6700000, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+

@@ -1,0 +1,4 @@
+geometry_msgs/PoseStamped curr_pose
+---
+string message
+bool success

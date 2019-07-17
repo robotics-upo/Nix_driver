@@ -1,0 +1,73 @@
+<launch>
+    <arg name="initial_pose_x" default="0." />
+    <arg name="initial_pose_y" default="0." />
+    <arg name="initial_pose_a" default="0." />
+    <arg name="initial_cov_xx" default="1." />
+    <arg name="initial_cov_yy" default="1." />
+    <arg name="initial_cov_aa" default="1." />
+    <!--<node pkg="amcl" type="amcl" name="amcl" output="screen">-->
+
+    <node pkg="amcl" type="amcl" name="amcl" respawn="true" output="screen">
+        <remap from="/scan" to="/front_scan" />
+        <!-- Initial pose and covariance are set in a loaded file -->
+        <param name="initial_pose_x" value ="$(arg initial_pose_x)" />
+        <param name="initial_pose_y" value ="$(arg initial_pose_y)" />
+        <param name="initial_pose_a" value ="$(arg initial_pose_a)" />
+        <param name="initial_cov_xx" value ="$(arg initial_cov_xx)" />
+        <param name="initial_cov_yy" value ="$(arg initial_cov_yy)" />
+        <param name="initial_cov_aa" value ="$(arg initial_cov_aa)" />
+
+        <!-- General AMCL settings -->
+        <param name="min_particles" value="500"/>
+        <param name="max_particles" value="5000"/>
+        <param name="update_min_d" value="0.05"/>
+        <param name="update_min_a" value="0.05"/>
+        <param name="resample_interval" value="2"/>
+        <param name="transform_tolerance" value="0.1"/>
+        <param name="gui_publish_rate" value="20.0"/>
+        <param name="save_pose_rate" value="10." />
+        <!-- Short and long term average decay rates for exponential filters for random particles generation (relocalization)-->
+        <param name="recovery_alpha_slow" value="0.001"/>
+        <param name="recovery_alpha_fast" value="0.1"/>
+        <param name="gui_publish_rate" value="20.0"/>
+        <param name="save_pose_rate" value="0.5" />
+        <!-- Mixture resampling parameters (use sensor model instead of belief) -->
+        <param name="kld_err" value="0.05"/>
+        <param name="kld_z" value="0.95"/>
+
+        <!-- Odometry Model parameters -->
+        <param name="global_frame_id" value="map" />
+        <param name="odom_frame_id" value="odom"/>
+        <param name="odom_model_type" value="diff-corrected"/>
+        <!-- alphas are rot-rot, rot-trans, trans-trans, trans-rot, trans-noise (omni) -->
+        <!-- Error in documentation, alpha1 is effect of rot in trans, alpha4 is effect of rot in rot -->
+        <!-- defaults are .2 .2 .2 .2 .1 -->
+        <!--<param name="odom_alpha1" value="0.005"/>-->
+        <!--<param name="odom_alpha2" value="0.005"/>-->
+        <!--<param name="odom_alpha3" value="0.01"/>-->
+        <!--<param name="odom_alpha4" value="0.005"/>-->
+        <!--<param name="odom_alpha5" value="0.0"/>-->
+        <param name="odom_alpha1" value="0.01"/>
+        <param name="odom_alpha2" value="0.01"/>
+        <param name="odom_alpha3" value="0.02"/>
+        <param name="odom_alpha4" value="0.02"/>
+        <param name="odom_alpha5" value="0.0"/>
+
+        <!-- Laser Model parameters -->
+        <param name="laser_min_range" value="0.3" />
+        <param name="laser_max_range" value="-1.0" />
+        <param name="laser_max_beams" value="100"/>
+        <!-- z_hit+z_short+z_max+z_rand = 1-->
+        <param name="laser_z_hit" value="0.5"/>                         <!-- Weight of general measurement noise -->
+        <param name="laser_z_short" value="0.05"/>                       <!-- Weight of dynamic objects causing short readings-->
+        <param name="laser_z_max" value="0.05"/>                        <!-- Weight of non detection causing max range readings -->
+        <param name="laser_z_rand" value="0.4"/>                        <!-- Weight of random false detections -->
+        <param name="laser_sigma_hit" value="0.2"/>
+        <param name="laser_lambda_short" value="0.1"/>
+        <param name="laser_model_type" value="likelihood_field"/>
+        <!-- <param name="laser_model_type" value="beam"/> -->
+        <param name="laser_likelihood_max_dist" value="2.0"/>
+    
+    </node>
+
+</launch>

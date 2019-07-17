@@ -1,0 +1,30 @@
+<launch>
+
+    <!-- Define real/simulation and controller type -->
+    <arg name="controller" value="joystick" />                                <!-- Controller - joystick, move_base or controller -->
+    <param name="simulation" type="bool" value="false" />                     <!-- Define if it will run on a robot or simulation -->
+    <param name="controller" type="string" value="$(arg controller)" />
+    <param name="/bot/kinematics" type="string" value="2wd" />
+
+    <!-- Start hardware-->
+    <!-- Launch motors and sensors boards -->
+    <include file="$(find idmind_motorsboard)/launch/idmind_motorsboard.launch" />
+    <include file="$(find idmind_sensorsboard)/launch/idmind_sensorsboard.launch" />
+    <!-- Launch IMU -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 0 0 3.14 0 0 base_link base_link_imu" />
+    <include file="$(find idmind_imu)/launch/idmind_imu.launch">
+        <arg name="imu" value="razor" />
+    </include>
+
+    <!-- Start Navigation -->
+    <include file="$(find idmind_navigation)/launch/idmind_navigation.launch">
+        <arg name="controller" value="$(arg controller)" />
+    </include>
+
+    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch" />
+
+    <!-- Launch rosbridge for web apps -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="8080"/>
+    </include>
+</launch>

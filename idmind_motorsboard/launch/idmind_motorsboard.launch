@@ -1,0 +1,7 @@
+<launch>
+    <!-- Load configuration from YAML -->
+    <rosparam command="load" file="$(find idmind_motorsboard)/cfg/idmind_motors.yaml" />
+
+    <node pkg="idmind_motorsboard" type="idmind_motors.py" name="idmind_motors" output="screen">
+    </node>
+</launch>

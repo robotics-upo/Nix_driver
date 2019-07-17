@@ -1,0 +1,58 @@
+# Global Costmap parameters (used with the planner defined in mbase.yaml and parameterized in navfn.yaml
+global_costmap:
+  global_frame: "map"
+  robot_base_frame: "base_link"
+  footprint: [[0.45,0.25],[0.45,-0.25],[-0.3,-0.25],[-0.3,0.25]]
+
+  transform_tolerance: 1.0              # Maximum delay between transforms to be considered same timestamp
+  update_frequency: 1.0                 # Frequency for the map to be updated
+  publish_frequency: 0.0                # Frequency for the map to be republished
+  rolling_window: false                 # False for global, true for local
+  static_map: true                      # Should it use a map published by map_server (in /map by default)
+  always_send_full_costmap: false       # Sens updates only of changed portions or full costmap
+  # The following parameters can be overwritten by some layers, namely the static map layer.
+  # width: 0
+  # height: 0
+  resolution: 0.05
+  origin_x: 0.0
+  origin_y: 0.0
+
+  plugins:
+    - {name: static_layer, type: 'costmap_2d::StaticLayer'}
+    - {name: obstacle_layer, type: 'costmap_2d::ObstacleLayer'}
+    - {name: inflation_layer, type: 'costmap_2d::InflationLayer'}
+
+  static_layer:                           # Parameters for the static layer
+    unknown_cost_value: -1                # When reading from map_server, this is value of unknown
+    lethal_cost_threshold: 100            # When reading from map_server, this is value of obsctacle
+    map_topic: "map"
+    first_map_only: false                 # Reads the map only once
+    subscribe_to_updates: false
+    track_unknown_space: true             # If true, unknown from messages is passed to map. Otherwise, becomes free space
+    use_maximum: false                    # If layer is not bottom, the maximum is written to master costmap
+    trinary_costmap: true                 # If true, there are 3 values. Otherwise, uses full spectrum of values
+
+  obstacle_layer:
+    track_unknown_space: false            # If true, pixels have 3 states: free, occupied and unknown. If false, only 2.
+    footprint_clearing_enabled: true      # Clears the footprint area in the costmap
+    obstacle_range: 6       # Maximum distance for a obstacle to be added to costmap. Can be overwritten per sensor.
+    raytrace_range: 7       # Maximum distance to clear obstacle from costmap. Can be overwritten per sensor.
+
+    observation_sources: laser_front
+
+    laser_front:
+      sensor_node: /front_laser
+      sensor_frame: front_laser
+      observation_persistence: 0.0
+      max_obstacle_height: 0.4
+      min_obstacle_height: 0.0
+      data_type: LaserScan
+      topic: /front_scan
+      marking: true
+      clearing: true
+      obstacle_range: 5
+      raytrace_range: 7
+
+  inflation_layer:
+    inflation_radius: 0.4
+    cost_scaling_factor: 5
