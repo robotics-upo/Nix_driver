@@ -79,18 +79,18 @@ class IDMindNavigation:
             self.max_vel_y = 0
             self.min_vel_y = 0
 
-        self.max_vel_x = rospy.get_param("smoother/max_lin_vel", default=max_default)
-        self.min_vel_x = rospy.get_param("smoother/min_lin_vel", default=0.1)
+        self.max_vel_x = rospy.get_param("/smoother/max_linear_vel", default=0.7)
+        self.min_vel_x = rospy.get_param("/smoother/min_linear_vel", default=0.1)
 
-        self.max_rot_vel = rospy.get_param("smoother/max_rot_vel", default=max_default)
-        self.min_rot_vel = rospy.get_param("smoother/min_rot_vel", default=0.1)
+        self.max_rot_vel = rospy.get_param("/smoother/max_rot_vel", default=2.0)
+        self.min_rot_vel = rospy.get_param("/smoother/min_rot_vel", default=0.1)
 
         # Real acceleration is reduced - this gives better results.
-        self.max_acc = rospy.get_param("smoother/linear_max_acc", default=0.4)
-        self.max_rot_acc = rospy.get_param("smoother/angular_max_acc", default=0.4)
+        self.max_acc = rospy.get_param("/smoother/linear_max_acc", default=0.7)
+        self.max_rot_acc = rospy.get_param("/smoother/angular_max_acc", default=0.4)
 
-        self.max_dacc = -1*rospy.get_param("smoother/linear_max_dacc", default=0.8)
-        self.max_rot_dacc = rospy.get_param("smoother/angular_max_dacc", default=0.4)
+        self.max_dacc = -1*rospy.get_param("/smoother/linear_max_dacc", default=0.9)
+        self.max_rot_dacc = rospy.get_param("/smoother/angular_max_dacc", default=0.7)
         #self.max_rot_dacc = self.max_rot_acc * 2.0  # Stay positive
 
         #######################
