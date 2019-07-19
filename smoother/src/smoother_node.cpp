@@ -4,6 +4,9 @@
 #include <std_msgs/Float32.h>
 #include <idmind_motorsboard/WheelsMB.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <smoother/SmootherConfig.h>
+
 #define PRINTF_BLUE  	"\x1B[34m"
 #define PRINTF_MAGENTA  "\x1B[35m"
 #define PRINTF_CYAN  	"\x1B[36m"
@@ -19,16 +22,20 @@ class Smoother
         
         vx_prev = 0;
         wz_prev = 0;
-    
+        ret.linear.x = 0;
+        ret.angular.z = 0;
+
+        bool showParams;
         min_speed.resize(3);
         max_speed.resize(3);
 
-        nh->param("/smoother/lin_max_speed", lin_max_vel, (float)0.8);
-        nh->param("/smoother/lin_min_speed", lin_min_vel, (float)-0.8);
-        nh->param("/smoother/lin_acc", lin_acc, (float)0.25);
-        nh->param("/smoother/lin_decc", lin_decc, (float)0.4);
-        nh->param("/smoother/angular_acc", ang_acc, (float)0.8);
-        nh->param("/smoother/angular_max_speed", ang_max_speed, (float)1.5);
+        nh->param("/smoother/max_linear_vel", lin_max_vel, (float)0.8);
+        nh->param("/smoother/min_linear_vel", lin_min_vel, (float)-0.8);
+        lin_min_vel*=-1;
+        nh->param("/smoother/linear_max_acc", lin_acc, (float)0.25);
+        nh->param("/smoother/linear_max_dacc", lin_decc, (float)0.4);
+        nh->param("/smoother/angular_max_acc", ang_acc, (float)0.8);
+        nh->param("/smoother/max_rot_vel", ang_max_speed, (float)1.5);
         nh->param("/smoother/exp_ct", exp_ct, (float)0.03);
         nh->param("/smoother/w_limit", w_limit, (float)50);
         nh->param("/smoother/debug",debug, (bool)false);
@@ -39,8 +46,22 @@ class Smoother
         nh->param("/smoother/input_twist_topic", input_twist_topic, (std::string)"/cmd_vel_joy");
         nh->param("/smoother/output_wheelsMb_topic", output_wheelsMb_topic, (std::string)"/idmind_motors/set_velocities");
         
+        nh->param("/smoother/show_params", showParams, (bool)false);
+
+
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Max Linear vel. = [%.2f]",lin_max_vel);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Min Linear vel. = [%.2f]",lin_min_vel);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Linear Max Acc. = [%.2f]",lin_acc);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Linear Max Decc. = [%.2f]",lin_decc);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Angular Max Acc. = [%.2f]",ang_acc);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Angular Max Speed = [%.2f]",ang_max_speed);
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Input twist topic = %s",input_twist_topic.c_str());
+        ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Output WheelsMB topic = %s",output_wheelsMb_topic.c_str());
+
+
         twist_pre_smooth_sub = nh->subscribe<geometry_msgs::Twist>(input_twist_topic, 1, &Smoother::twistCb, this);
         wheelsMb_pub = nh->advertise<idmind_motorsboard::WheelsMB>(output_wheelsMb_topic,0);
+
 
         //Store original accelerations
         //TODO: Make original accelerations const 
@@ -49,31 +70,42 @@ class Smoother
         ang_acc_or = ang_acc;
         
         rate = rate_;
-        ROS_INFO_COND(debug, PRINTF_CYAN"Lin max acc or: %.2f lin min decc or  %.2f", lin_acc_or, lin_decc_or);
-        
+        ROS_INFO_COND(debug, PRINTF_CYAN"Lin max acc or: %.2f lin min decc or  %.2f", lin_acc_or, lin_decc_or);        
     }
     
     void run(){
         smooth();
-        convertToWheelsMb();
-        wheelsMb_pub.publish(ret);
+        convertToWheelsMbMsg();
+        wheelsMb_pub.publish(wheels_msg);
     }
     
     void twistCb(const geometry_msgs::Twist::ConstPtr &msg){
         ret = *msg;
     }   
-
+    void dynReconfCb(smoother::SmootherConfig &config, uint32_t level)
+    {
+        this->lin_max_vel= config.lin_max_vel;
+        this->lin_min_vel= -1*config.lin_min_vel;
+        this->lin_acc= config.lin_acc;
+        this->lin_decc= config.lin_decc;
+        this->ang_max_speed= config.ang_max_speed;
+        this->ang_acc= config.ang_acc;
+    }
     private:
-    void convertToWheelsMb(){
+    void convertToWheelsMbMsg(){
         //Convert velocities to wheel linear velocity
-        l_vel = -(ret.linear.x - ret.angular.z * base_width/2);
+        l_vel = (ret.linear.x - ret.angular.z * base_width/2);
         r_vel = (ret.linear.x + ret.angular.z * base_width/2);
+
         wheels_msg.front_right=r_vel;
         wheels_msg.front_left = l_vel;
 
         wheels_msg.header.frame_id="odom";
         wheels_msg.header.stamp=ros::Time::now();
         wheels_msg.kinematics = "2wd";
+
+        ROS_INFO_COND(debug, PRINTF_CYAN"Ret variable-> x: %.2f\t z: %.2f",ret.linear.x,ret.angular.z);
+        ROS_INFO_COND(debug, PRINTF_CYAN"Wheels msg->  Fr: %.2f\t Fl %.2f", wheels_msg.front_right, wheels_msg.front_left);
     }
     void smooth(){
         
@@ -244,16 +276,23 @@ int main(int argc, char** argv){
 
     ros::init(argc, argv, "smoother_node");
     ros::NodeHandle n;
-
    
-    ros::Rate rate(20);
+    ros::Rate rate(LOOP_RATE);
 
-    Smoother smoother(&n,20);
+
+    Smoother smooth(&n,LOOP_RATE);
+
+
+    dynamic_reconfigure::Server<smoother::SmootherConfig> server;
+  	dynamic_reconfigure::Server<smoother::SmootherConfig>::CallbackType f;
+
+  	f = boost::bind(&Smoother::dynReconfCb,&smooth,  _1, _2);
+  	server.setCallback(f);
 
     while(ros::ok()){
         ros::spinOnce();
 
-        smoother.run();
+        smooth.run();
 
         rate.sleep();
     }
