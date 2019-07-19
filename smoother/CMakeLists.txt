@@ -11,6 +11,7 @@ find_package(
   catkin REQUIRED COMPONENTS
   roscpp
   idmind_motorsboard
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -68,11 +69,11 @@ find_package(Boost REQUIRED COMPONENTS system)
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
-   idmind_motorsboard
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+#   idmind_motorsboard
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -89,10 +90,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+ generate_dynamic_reconfigure_options(
+  cfg/smoother.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -135,6 +135,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(smoother_node src/smoother_node.cpp)
+add_dependencies(smoother_node ${PROJECT_NAME}_gencfg)
 add_dependencies(smoother_node ${catkin_EXPORTED_TARGETS})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
