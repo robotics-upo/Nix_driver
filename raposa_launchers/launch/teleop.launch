@@ -1,6 +1,7 @@
 <launch>
     <!-- Load configuration from YAML -->
     <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
+    <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />
     <!-- Start hardware-->
   
     <!-- Launch motors and sensors boards -->
@@ -11,9 +12,10 @@
     <!--<node pkg="idmind_sensorsboard" type="idmind_sensors.py" name="idmind_sensors" output="screen"/>-->
     
     <arg name="controller" default="joystick" />
-    <node pkg="idmind_navigation" type="navigation_node.py" name="navigation_node" output="screen" />
-    <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen" />
-    
+    <!-- <node pkg="idmind_navigation" type="navigation_node.py" name="navigation_node" output="screen" /> -->
+    <!-- <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen" /> -->
+    <node pkg="smoother" type="smoother_node" name="smoother_node"/>
+
     <!-- Launch IMU -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broadcaster" args="0.04 -0.10 0 3.14 0 0 base_link base_link_imu" />
     <include file="$(find idmind_imu)/launch/idmind_imu.launch">
