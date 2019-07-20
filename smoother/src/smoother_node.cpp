@@ -35,7 +35,7 @@ class Smoother
         nh->param("/smoother/linear_max_acc", lin_acc, (float)0.25);
         nh->param("/smoother/linear_max_dacc", lin_decc, (float)0.4);
         nh->param("/smoother/angular_max_acc", ang_acc, (float)0.8);
-        nh->param("/smoother/max_rot_vel", ang_max_speed, (float)1.5);
+        nh->param("/smoother/max_rot_vel", ang_max_speed, (float)3);
         nh->param("/smoother/exp_ct", exp_ct, (float)0.03);
         nh->param("/smoother/w_limit", w_limit, (float)50);
         nh->param("/smoother/debug",debug, (bool)false);
@@ -94,7 +94,7 @@ class Smoother
     private:
     void convertToWheelsMbMsg(){
         //Convert velocities to wheel linear velocity
-        l_vel = (ret.linear.x - ret.angular.z * base_width/2);
+        l_vel = -(ret.linear.x - ret.angular.z * base_width/2);//! Minus sign is because the motors are inverted
         r_vel = (ret.linear.x + ret.angular.z * base_width/2);
 
         wheels_msg.front_right=r_vel;
@@ -173,7 +173,7 @@ class Smoother
             lin_decc = exp_factor(lin_decc_or,weight.data); //fabs(lin_decc_or*(1-exp(-exp_ct*(w_limit-weight.data))));
             ang_acc = exp_factor(ang_acc_or, weight.data); //fabs(ang_acc_or*(1-exp(-exp_ct*(w_limit-weight.data))));
         }
-    
+        
         ROS_INFO_COND(debug,PRINTF_CYAN "Weight-corrected lin_acc,lin_decc,ang_acc: [%.2f, %.2f, %.2f]", lin_acc, lin_decc, ang_acc);
         lin_decc/=rate;
         lin_acc/=rate;
