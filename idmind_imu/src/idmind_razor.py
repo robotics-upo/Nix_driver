@@ -216,7 +216,7 @@ class IDMindIMU:
 
     def start(self):
 
-        r = rospy.Rate(20)
+        r = rospy.Rate(100)
         while not rospy.is_shutdown():
             try:
                 self.log("Bytes waiting: {}".format(self.ser.in_waiting), 5)
