@@ -11,7 +11,7 @@
 
     <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node"/>
     
-    <node pkg="smoother" type="smoother_node" name="smoother_node" output="screen">
+    <node pkg="smoother" type="smoother_node" name="smoother_node">
 	<remap from="/cmd_vel_joy" to="/cmd_vel"/>
     </node>
     
