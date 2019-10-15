@@ -5,7 +5,7 @@ from std_msgs.msg import Int32
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger, TriggerRequest
-from idmind_motorsboard.msg import WheelsMB #Added by Fali
+from idmind_motorsboard.msg import WheelsMB  # Added by Fali
 
 # Using D mode
 # buttons = {"X": 0, "A": 1, "B": 2, "Y": 3, "LB": 4, "RB": 5, "LT": 6, "RT": 7, "BACK": 8,
@@ -13,19 +13,23 @@ from idmind_motorsboard.msg import WheelsMB #Added by Fali
 # axis = {"XArrows": 0, "YArrows": 1, "XRJoy": 2, "YRJoy": 3, "XLJoy": 4, "YLJoy": 5}
 
 # Using X, Mode Off
-buttons = {"A": 0, "B": 1, "X": 2, "Y": 3, "LB": 4, "RB": 5, "BACK": 6, "START": 7, "LOGI": 8, "LJOY": 9, "RJOY": 10}
-axis = {"XLJoy": 0, "YLJoy": 1, "LT": 2, "XRJoy": 3, "YRJoy": 4, "RT": 5, "XArrows": 6, "YArrows": 7}
+buttons = {"A": 0, "B": 1, "X": 2, "Y": 3, "LB": 4, "RB": 5,
+           "BACK": 6, "START": 7, "LOGI": 8, "LJOY": 9, "RJOY": 10}
+axis = {"XLJoy": 0, "YLJoy": 1, "LT": 2, "XRJoy": 3,
+        "YRJoy": 4, "RT": 5, "XArrows": 6, "YArrows": 7}
 
 SET_ARM_MAX = 690
 SET_ARM_MIN = 444
 ARM_INCR = 15
 
+
 class Teleop:
     """
     Class responsible for interpreting joystick commands
     """
+
     def __init__(self):
-        
+
         # Robot parameters - load from idmind_robot or from idmind_motorsboard
         self.control_freq = 20
         self.kinematics = rospy.get_param("/bot/kinematics", default="2wd")
@@ -35,20 +39,20 @@ class Teleop:
         else:
             self.max_vel = rospy.get_param("/motors/max_vel", default=0.7)
             self.max_rot = rospy.get_param("/bot/max_rot", default=2.7)
-	
+
         ################
         #  Navigation  #
         ################
         self.twist = Twist()
         self.twist_pub = rospy.Publisher("/cmd_vel_joy", Twist, queue_size=10)
-        #try:
+        # try:
         #    rospy.wait_for_service("/idmind_navigation/toggle_joystick", timeout=10)
         #    self.toggle_joy = rospy.ServiceProxy("/idmind_navigation/toggle_joystick", Trigger)
-        #except rospy.ROSException:
+        # except rospy.ROSException:
         #    rospy.logwarn("/idmind_navigation did not respond, assuming direct link to motorsboard")
-	self.last_time = rospy.Time.now()
-	self.republish = True
-	self.joy_received = False
+        self.last_time = rospy.Time.now()
+        self.republish = True
+        self.joy_received = False
         ####################
         #  Robot Features  #
         ####################
@@ -56,19 +60,20 @@ class Teleop:
         self.arm_position = 512
         self.arm_goal = 512
         rospy.Subscriber("/idmind_motors/arm", Int32, self.handle_arm)
-        self.arm_pub = rospy.Publisher("/idmind_motors/set_arm", Int32, queue_size=10)
+        self.arm_pub = rospy.Publisher(
+            "/idmind_motors/set_arm", Int32, queue_size=10)
 
         # Subscribe should be last, in order to set all required variables
         rospy.Subscriber("/joy", Joy, self.update_joy)
 
         rospy.loginfo("{} is initialized".format(rospy.get_name()))
-	
+
     def update_joy(self, msg):
-	self.last_time = rospy.Time.now()
-	
-	self.joy_received = True
-        
-	new_vel = Twist()
+        self.last_time = rospy.Time.now()
+
+        self.joy_received = True
+
+        new_vel = Twist()
         new_vel.linear.x = msg.axes[1] * self.max_vel
         if self.kinematics == "2wd":
             new_vel.angular.z = msg.axes[0] * self.max_rot
@@ -76,21 +81,21 @@ class Teleop:
             new_vel.linear.y = msg.axes[3] * self.max_vel
             new_vel.angular.z = msg.axes[0] * self.max_rot
         self.twist = new_vel
-	
+
         self.arm_goal = self.arm_position - 10 * msg.axes[5]
         if msg.buttons[4] and self.arm_goal < SET_ARM_MAX:
-	    self.arm_goal +=ARM_INCR
-	if msg.buttons[5] and self.arm_goal > SET_ARM_MIN:
-	    self.arm_goal -=ARM_INCR
+            self.arm_goal += ARM_INCR
+        if msg.buttons[5] and self.arm_goal > SET_ARM_MIN:
+            self.arm_goal -= ARM_INCR
 
         if msg.buttons[1] == 1:
-            #self.toggle_joy(TriggerRequest()) # Esto daba el error que no existia toggle joy
-	    if self.republish:
-		self.republish = False
-		rospy.logwarn("republish to false")
-	    else:
-		self.republish = True
-		rospy.logwarn("republish to true")
+            # self.toggle_joy(TriggerRequest()) # Esto daba el error que no existia toggle joy
+            if self.republish:
+                self.republish = False
+                rospy.logwarn("republish to false")
+            else:
+                self.republish = True
+                rospy.logwarn("republish to true")
 
     def handle_arm(self, msg):
         self.arm_position = msg.data
@@ -98,16 +103,15 @@ class Teleop:
     def start(self):
         r = rospy.Rate(self.control_freq)
         while not rospy.is_shutdown():
-	    dt = (rospy.Time.now() - self.last_time).to_sec()
+            dt = (rospy.Time.now() - self.last_time).to_sec()
             if dt > 5:
                 self.joy_received = False
-	    if not self.joy_received and self.republish:
-		new_vel = Twist()
-		self.twist = new_vel
+            if not self.joy_received and self.republish:
+                new_vel = Twist()
+                self.twist = new_vel
             try:
-		if self.joy_received or self.republish:                
-		    self.twist_pub.publish(self.twist)
-		   
+                if self.joy_received or self.republish:
+                    self.twist_pub.publish(self.twist)
 
                 self.arm_pub.publish(self.arm_goal)
                 r.sleep()
