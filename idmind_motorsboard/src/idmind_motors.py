@@ -8,8 +8,8 @@ from idmind_motorsboard.msg import WheelsMB
 from idmind_serial2.idmind_serialport import IDMindSerial
 from std_msgs.msg import Int32
 
-VERBOSE = 3
-LOGS = 3
+VERBOSE = 5
+LOGS = 5
 
 GET_ENC = 0x4A
 GET_ARM = 0x48
@@ -68,7 +68,7 @@ class MotorBoard:
             self.max_ref = 1100
 
         # Load time tolerance for velocities to be passed to motors
-        self.time_tolerance = rospy.get_param("/motors/time_tolerance", default=0.5)
+        self.time_tolerance = rospy.get_param("/motors/time_tolerance", default=2)
 
         #################
         #  ROBOT STATE  #
@@ -81,8 +81,13 @@ class MotorBoard:
         self.pub_dist = rospy.Publisher("/idmind_motors/wheel_odom", WheelsMB, queue_size=10)
         self.ticks_pub = rospy.Publisher("/idmind_motors/ticks", WheelsMB, queue_size=10)
 
-        self.arm_position = Int32()
+        self.arm_position = rospy.get_param("/arm/initial_pose", default=512) # Int32()
+
+        self.arm_msg = Int32()
+        self.arm_msg.data = rospy.get_param("/arm/initial_pose",default=512)
+        
         self.pub_arm = rospy.Publisher("/idmind_motors/arm", Int32, queue_size=10)
+        
 
         self.set_velocities = WheelsMB()
         self.set_velocities.header.frame_id = "/odom"
@@ -91,6 +96,7 @@ class MotorBoard:
 
         self.arm_ts = rospy.Time.now()
         self.set_arm = Int32()
+        self.set_arm.data = 500
         rospy.Subscriber("/idmind_motors/set_arm", Int32, self.handle_arm)
 
         ##################
@@ -295,7 +301,7 @@ class MotorBoard:
                 r = min(1, self.max_ref/max([abs(a) for a in refs]))
             except ZeroDivisionError:
                 r = 1
-            except RuntimeWarning:##TODO saber porque esto
+            except RuntimeWarning: ##TODO saber porque esto
                 r = 1
             for w in refs:
                 msg.extend(self.ser.to_bytes(w * r))
@@ -375,14 +381,18 @@ class MotorBoard:
         :return:
         """
         # Update and publish arm position
-        # try:
-        #    if not self.get_arm_position():
-        #        raise IOError("Failure to get arm position")
-        #    else:
-        #        arm_msg = Int32(self.arm_position)
-        #        self.pub_arm.publish(arm_msg)
-        # except IOError as io_err:
-        #    raise io_err
+        try:
+           if not self.get_arm_position():
+                raise IOError("Failure to get arm position")
+           else:
+                self.arm_msg.data = self.arm_position
+                try:
+                    self.pub_arm.publish(self.arm_msg)
+                except ROSException as e:
+                    raise ROSException("ros exception")
+
+        except IOError as io_err:
+           raise io_err
 
         # Update and publish motor distances
         
