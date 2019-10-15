@@ -50,9 +50,10 @@ class Teleop:
         #    self.toggle_joy = rospy.ServiceProxy("/idmind_navigation/toggle_joystick", Trigger)
         # except rospy.ROSException:
         #    rospy.logwarn("/idmind_navigation did not respond, assuming direct link to motorsboard")
-        self.last_time = rospy.Time.now()
+        #self.last_time = rospy.Time.now()
         self.republish = True
-        self.joy_received = False
+        #self.joy_received = False
+        self.last_send = False
         ####################
         #  Robot Features  #
         ####################
@@ -69,12 +70,14 @@ class Teleop:
         rospy.loginfo("{} is initialized".format(rospy.get_name()))
 
     def update_joy(self, msg):
-        self.last_time = rospy.Time.now()
 
-        self.joy_received = True
+        #self.last_time = rospy.Time.now()
+        #self.joy_received = True
+        self.last_send = False
 
         new_vel = Twist()
         new_vel.linear.x = msg.axes[1] * self.max_vel
+
         if self.kinematics == "2wd":
             new_vel.angular.z = msg.axes[0] * self.max_rot
         elif self.kinematics == "omni":
@@ -88,7 +91,7 @@ class Teleop:
         if msg.buttons[5] and self.arm_goal > SET_ARM_MIN:
             self.arm_goal -= ARM_INCR
 
-        if msg.buttons[1] == 1:
+        if msg.buttons[9] == 1:
             # self.toggle_joy(TriggerRequest()) # Esto daba el error que no existia toggle joy
             if self.republish:
                 self.republish = False
@@ -103,15 +106,17 @@ class Teleop:
     def start(self):
         r = rospy.Rate(self.control_freq)
         while not rospy.is_shutdown():
-            dt = (rospy.Time.now() - self.last_time).to_sec()
-            if dt > 5:
-                self.joy_received = False
-            if not self.joy_received and self.republish:
+            #dt = (rospy.Time.now() - self.last_time).to_sec()
+            # if dt > 5:
+            #    self.joy_received = False
+
+            if self.republish and self.last_send:  # not self.joy_received and self.republish:
                 new_vel = Twist()
                 self.twist = new_vel
             try:
-                if self.joy_received or self.republish:
+                if not self.last_send or self.republish:
                     self.twist_pub.publish(self.twist)
+                    self.last_send = True
 
                 self.arm_pub.publish(self.arm_goal)
                 r.sleep()
