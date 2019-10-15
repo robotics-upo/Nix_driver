@@ -15,7 +15,7 @@ class IDMindSerial(serial.Serial):
         :param baudrate:
         :param timeout:
         """
-        self.verbose = verbose
+        self.verbose = False
         self.verify_checksum = verify_checksum
         self.mutex = Lock()
 
@@ -137,7 +137,7 @@ class IDMindSerial(serial.Serial):
         while t < tries:
             try:
                 res = self.read(nr_bytes)
-
+                
                 for i in range(len(res)):
                     print ord(res[i]),
                 print ("\n")
