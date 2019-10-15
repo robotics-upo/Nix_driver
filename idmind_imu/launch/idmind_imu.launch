@@ -1,7 +1,7 @@
 <launch>
     <!--<node pkg="idmind_razor" type="idmind_imu.py" name="idmind_imu" output="screen" >-->
     <arg name="imu" default="razor" />
-    <node pkg="idmind_imu" type="idmind_$(arg imu).py" name="idmind_imu" output="screen" >
+    <node pkg="idmind_imu" type="idmind_$(arg imu).py" name="idmind_imu" >
         <rosparam file="$(find idmind_imu)/cfg/idmind_imu.yaml" command="load" />
     </node>
 
