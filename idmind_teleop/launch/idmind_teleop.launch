@@ -2,5 +2,5 @@
     <node name="joy_node" pkg="joy" type="joy_node" >
         <param name="dev" value="/dev/idmind-joystick" />
     </node>
-    <node pkg="idmind_teleop" type="joy_controller.py" name="idmind_teleop" output="screen" />
+    <node pkg="idmind_teleop" type="joy_controller.py" name="idmind_teleop" />
 </launch>
