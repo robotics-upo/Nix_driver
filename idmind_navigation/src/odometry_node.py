@@ -107,11 +107,12 @@ class IDMindOdometry:
         self.vth = 0
 
         # Publish odometry and broadcast odometry
-        self.odom_broadcast = TransformBroadcaster()
+	self.odom_broadcast = TransformBroadcaster()
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
 
         self.tf_buffer = Buffer()
         self.transform_listener = TransformListener(self.tf_buffer)
+
 
         ###############################################
         #  Relevant External sensors (bumpers, doors) #
@@ -183,7 +184,7 @@ class IDMindOdometry:
         while not calibrated and not rospy.is_shutdown():
             rospy.wait_for_message("/imu", Imu)
             try:
-                q = self.imu_reading.orientation
+	        q = self.imu_reading.orientation
                 ###################
                 # Simple rotation #
                 ###################
@@ -191,7 +192,8 @@ class IDMindOdometry:
                 #######################
                 # Quaternion Rotation #
                 #######################
-                imu_pose = PoseStamped()
+                trans = self.tf_buffer.lookup_transform("base_link", "base_link_imu", rospy.Time.now(), rospy.Duration(1.0))
+		imu_pose = PoseStamped()
                 imu_pose.header.frame_id = "base_link_imu"
                 imu_pose.pose.orientation = Quaternion(x=q.x, y=q.y, z=q.z, w=q.w)
                 imu_real = self.tf_buffer.transform(imu_pose, "base_link")
@@ -203,7 +205,9 @@ class IDMindOdometry:
             except KeyboardInterrupt:
                 raise KeyboardInterrupt()
             except LookupError as l_error:
-                self.log("Lookpu error in IMU calibration: {}".format(l_error), 5)
+                self.log("Lookup error in IMU calibration: {}".format(l_error), 5)
+	    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+		self.log("tf2 exception")
             r.sleep()
         self.log("IMU Calibrated", 5)
         return TriggerResponse(True, "Calibration completed")
