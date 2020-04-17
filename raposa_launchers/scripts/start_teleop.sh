@@ -1,12 +1,13 @@
 #!/bin/bash
 
-sleep 10
+sleep 60
 
 source /opt/ros/kinetic/setup.bash
 source /home/raposa/catkin_raposa/devel/setup.bash
 
 export ROS_HOSTNAME="raposa-idmind"
-
+export ROS_IP=192.168.0.3
+export ROS_MASTER_URI=192.168.4.2
 
 if ping -q -c5 raposa-nav &> /dev/null
 then
