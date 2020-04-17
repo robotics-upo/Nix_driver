@@ -33,8 +33,8 @@ class Teleop:
             self.max_vel = rospy.get_param("/bot/max_vel")
             self.max_rot = rospy.get_param("/bot/max_rot")
         else:
-            self.max_vel = rospy.get_param("/motors/max_vel", default=0.7)
-            self.max_rot = rospy.get_param("/bot/max_rot", default=2.7)
+            self.max_vel = rospy.get_param("/motors/max_vel", default=0.3)
+            self.max_rot = rospy.get_param("/bot/max_rot", default=0.7)
 	
         ################
         #  Navigation  #
