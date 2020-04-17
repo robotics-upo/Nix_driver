@@ -39,7 +39,8 @@ class IDMindOdometry:
         self.base_width = rospy.get_param("/bot/base_width", default=0.26)
         self.simulation = rospy.get_param("/simulation", default=False)
         self.control_freq = rospy.get_param("/move_base/controller_frequency", default=20.)
-
+	self.use_imu = rospy.get_param("/use_imu", default=True)   # UPO: Added param to not use the IMU
+	self.publish_tf = rospy.get_param("/publish_tf", default=True) # UPO: added to switch between mapping and navigation
         if not self.simulation:
             #########################
             #  Hardware connection  #
@@ -88,7 +89,7 @@ class IDMindOdometry:
         rospy.Service("/idmind_navigation/display_calib", Trigger, self.display_calib)
         self.imu_reading = Imu()
         if not self.simulation:
-            rospy.Subscriber("/imu", Imu, self.update_imu)
+            rospy.Subscriber("/imu", Imu, self.update_imu, queue_size=1)
         else:
             rospy.Subscriber("/gazebo/imu", Imu, self.update_imu)
 
@@ -227,7 +228,8 @@ class IDMindOdometry:
 
         # Check if IMU readings can be used. If yes, dth is set
         try:
-            if (rospy.Time.now() - self.imu_reading.header.stamp).to_sec() < 1.:
+            if self.use_imu:
+ 	      if (rospy.Time.now() - self.imu_reading.header.stamp).to_sec() < 1.:
                 # q = self.imu_reading.orientation
                 ###################
                 # Simple rotation #
@@ -267,6 +269,9 @@ class IDMindOdometry:
                                                               round(imu_val, 4)), 7)
                 dth = imu_val - self.th
                 use_imu = True
+	      else:
+	        dth = 0
+		use_imu = False
             else:
                 dth = 0
                 use_imu = False
@@ -391,8 +396,8 @@ class IDMindOdometry:
 
             q = transformations.quaternion_from_euler(0, 0, self.th)
             transf_msg.transform.rotation = Quaternion(*q)
-
-            self.odom_broadcast.sendTransform(transf_msg)
+            if self.publish_tf:
+                self.odom_broadcast.sendTransform(transf_msg)
 
             # Build Odometry Message
             odom_msg = Odometry()
@@ -414,7 +419,9 @@ class IDMindOdometry:
 
     def start(self):
         r = rospy.Rate(self.control_freq)
-        self.calibrate_imu(TriggerRequest())
+
+	if self.use_imu:
+        	self.calibrate_imu(TriggerRequest())
         while not rospy.is_shutdown():
             try:
                 self.broadcast_odometry()
