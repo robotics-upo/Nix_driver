@@ -1,7 +1,8 @@
 <launch>
     <!-- Load configuration from YAML -->
+	<node pkg="start_node" type="start_node_node" name="start_node_node"/>
     <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
-    <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />
+  
     <rosparam command="load" file="$(find idmind_motorsboard)/cfg/idmind_motors.yaml" />   
  	
     <!-- Launch motors and sensors boards -->
@@ -9,10 +10,11 @@
 
     <!--<node pkg="idmind_sensorsboard" type="idmind_sensors.py" name="idmind_sensors"/>-->
 
-    <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node"/>
+    <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen"/>
     
     <node pkg="smoother" type="smoother_node" name="smoother_node">
 	<remap from="/cmd_vel_joy" to="/cmd_vel"/>
+	 <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />
     </node>
     
     <!-- Launch IMU -->
