@@ -29,24 +29,24 @@ class Smoother
         min_speed.resize(3);
         max_speed.resize(3);
 
-        nh->param("/smoother/max_linear_vel", lin_max_vel, (float)0.8);
-        nh->param("/smoother/min_linear_vel", lin_min_vel, (float)-0.8);
+        nh->param("max_linear_vel", lin_max_vel, (float)0.5);
+        nh->param("min_linear_vel", lin_min_vel, (float)-0.5);
         lin_min_vel*=-1;
-        nh->param("/smoother/linear_max_acc", lin_acc, (float)0.25);
-        nh->param("/smoother/linear_max_dacc", lin_decc, (float)0.4);
-        nh->param("/smoother/angular_max_acc", ang_acc, (float)0.8);
-        nh->param("/smoother/max_rot_vel", ang_max_speed, (float)3);
-        nh->param("/smoother/exp_ct", exp_ct, (float)0.03);
-        nh->param("/smoother/w_limit", w_limit, (float)50);
-        nh->param("/smoother/debug",debug, (bool)false);
-        nh->param("/smoother/scale_sensible_smoother", weightEnabled, (bool)false);
-        nh->param("/smoother/security_step", sec_step, (float)10);
-        nh->param("/smoother/base_width", base_width, (float)0.26);
+        nh->param("linear_max_acc", lin_acc, (float)0.1);
+        nh->param("linear_max_dacc", lin_decc, (float)0.2);
+        nh->param("angular_max_acc", ang_acc, (float)0.25);
+        nh->param("max_rot_vel", ang_max_speed, (float)2);
+        nh->param("exp_ct", exp_ct, (float)0.03);
+        nh->param("w_limit", w_limit, (float)50);
+        nh->param("debug",debug, (bool)false);
+        nh->param("scale_sensible_smoother", weightEnabled, (bool)false);
+        nh->param("security_step", sec_step, (float)10);
+        nh->param("base_width", base_width, (float)0.26);
         //You can select the in and out topics :)
-        nh->param("/smoother/input_twist_topic", input_twist_topic, (std::string)"/cmd_vel_joy");
-        nh->param("/smoother/output_wheelsMb_topic", output_wheelsMb_topic, (std::string)"/idmind_motors/set_velocities");
+        nh->param("input_twist_topic", input_twist_topic, (std::string)"/cmd_vel");
+        nh->param("output_wheelsMb_topic", output_wheelsMb_topic, (std::string)"/idmind_motors/set_velocities");
         
-        nh->param("/smoother/show_params", showParams, (bool)false);
+        nh->param("show_params", showParams, (bool)false);
 
 
         ROS_INFO_COND(showParams, PRINTF_MAGENTA"Smoother: Max Linear vel. = [%.2f]",lin_max_vel);
@@ -275,7 +275,7 @@ class Smoother
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "smoother_node");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
    
     ros::Rate rate(LOOP_RATE);
 
