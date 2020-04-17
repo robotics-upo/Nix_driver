@@ -3,5 +3,5 @@ bot:
   kinematics: "2wd"     # Kinematics can be 2wd or omni
   base_width: 0.6       # Distance from wheel to wheel (if the robot has special configuration, rethink this and navigation)
   wheel_radius: 0.09    # Radius of the wheel, to be used for navigation
-  max_vel: 0.7          # Maximum robot velocity
-  max_rot: 2.3          # Maximum robot angular velocity (Max vel / Base_radius)
+  max_vel: 0.25          # Maximum robot velocity
+  max_rot: 0.5          # Maximum robot angular velocity (Max vel / Base_radius)
