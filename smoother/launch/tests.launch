@@ -1,0 +1,7 @@
+<launch>
+
+    <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />
+    <include file="$(find idmind_teleop)/launch/idmind_teleop.launch"/>
+
+    <node pkg="smoother" type="smoother_node" name="smoother_node" output="screen"/>
+</launch>
