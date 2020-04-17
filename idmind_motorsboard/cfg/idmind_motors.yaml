@@ -2,8 +2,8 @@ motors:
   kinematics: "2wd"     # Kinematics of the robot - 2wd or omni
   wheel_radius: 0.09    # Radius of the wheel, to be used for navigation, in meters
   max_ref: 1800         # Reference for maximum wheel velocity 1100 by default
-  max_vel: 0.7          # Maximum wheel velocity, in m/s
-  min_vel: 0.2          # Minimum velocity for wheel to move, in m/s
+  max_vel: 0.35          # Maximum wheel velocity, in m/s
+  min_vel: 0.05          # Minimum velocity for wheel to move, in m/s
   time_tolerance: 1   # Time tolerance for a message to be used
   ticks:
     front_left: 130000     #32250
