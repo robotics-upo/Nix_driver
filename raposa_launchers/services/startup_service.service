@@ -1,0 +1,8 @@
+[Unit]
+After=raposa_robot_start_service
+
+[Service]
+ExecStart=/usr/bin/start_raposa
+
+[Install]
+WantedBy=default.target
