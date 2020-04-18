@@ -16,6 +16,6 @@ then # If there is ping, wait for ros master
     roslaunch raposa_launchers teleop.launch
 else #If there is no ping, start the robot in basic mode (only drivers and roscore in the bottom pc)
     export ROS_MASTER_URI=http://raposa-idmind:11311
-    roslaunch raposa_launchers teleop.launch 
+    roslaunch raposa_launchers teleop.launch only_driver_pc:=true
 fi
 
