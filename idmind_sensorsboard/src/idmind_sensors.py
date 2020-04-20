@@ -278,7 +278,7 @@ class SensorBoard:
     
     def set_low_latency(self):
         try:
-            subprocess.check_call(['setserial',self.ser,'low_latency'])
+            subprocess.check_call(['setserial','/dev/idmind-sensorsboard','low_latency'])
         except subprocess.CalledProcessError as err:
             if VERBOSE > 2:
                 print("\t Unable to set low lattency: {}".format(err.returncode))
