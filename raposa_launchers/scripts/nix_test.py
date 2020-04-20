@@ -109,12 +109,12 @@ class Sensors:
                 print("Error reading firmware")
             return False
         else:
-            light_buffer = self.s.read_command(29)
-            if len(light_buffer) == 29:
-                checksum = self.s.to_num(light_buffer[-2:])
+            light_buffer = self.s.read_command(28)
+            if len(light_buffer) == 28:
+                checksum = self.s.to_num(light_buffer[-2], light_buffer[-1])
                 bytesum = sum([ord(a) for a in light_buffer[0:-2]])
                 if ord(light_buffer[0]) == 0x20 and bytesum == checksum:
-                    self.firmware = str(light_buffer[1:26])
+                    self.firmware = str(light_buffer[1:-2])
                     return self.firmware
                 else:
                     if self.verbose > 5:
