@@ -6,6 +6,7 @@ from std_msgs.msg import Bool
 from std_srvs.srv import Trigger, TriggerResponse
 from idmind_sensorsboard.msg import SystemVoltages
 from idmind_serial2.idmind_serialport import IDMindSerial
+import subprocess
 
 VERBOSE = 3
 LOGS = 3
@@ -70,6 +71,7 @@ class SensorBoard:
         rospy.Service("/idmind_sensors/switch_motor_relay", Trigger, self.handle_switch_motor_relay)
         rospy.Service("/idmind_sensors/switch_cable_relay", Trigger, self.handle_switch_cable_relay)
         rospy.Service("/idmind_sensors/switch_electronic_relay", Trigger, self.handle_switch_electronic_relay)
+        rospy.Service("/idmind_sensors/set_low_latency", Trigger, self.handle_low_latency)
 
     #########################
     #  AUXILIARY FUNCTIONS  #
@@ -143,7 +145,12 @@ class SensorBoard:
             self.log(msg, 5)
             self.switch_relays = True
             return TriggerResponse(False, msg)
-
+    def handle_low_latency(self, _req):
+        """ Service to set the FTDI time 1 ms
+            
+        """
+        self.set_low_latency()
+        
     ###################################################
     #           Raposa Sensor GET Functions           #
     ###################################################
@@ -268,6 +275,13 @@ class SensorBoard:
         except Exception as err:
             self.log("Exception setting relays reply from sensors board: {}".format(err), 3)
             raise IOError("Exception setting relays reply from sensors board: {}".format(err))
+    
+    def set_low_latency(self):
+        try:
+            subprocess.check_call(['setserial',self.ser,'low_latency'])
+        except subprocess.CalledProcessError as err:
+            if VERBOSE > 2:
+                print("\t Unable to set low lattency: {}".format(err.returncode))
 
     def set_lights_control(self):
         """################################################
