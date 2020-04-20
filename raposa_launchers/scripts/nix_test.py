@@ -8,7 +8,7 @@ from idmind_serial2.idmind_serialport import IDMindSerial
 
 
 class Sensors:
-    def __init__(self, address="", baudrate=115200, verbose=5, timeout=0.5):
+    def __init__(self, address="", baudrate=57600, verbose=5, timeout=0.5):
 
         self.verbose = verbose
         self.firmware = ""
@@ -65,11 +65,15 @@ class Sensors:
                                 time.sleep(0.5)
                             return
                         else:
+                            if self.verbose > 3:
+                                print("\tWrong firmware reply from {}".format(addr))
+                                time.sleep(0.5)
                             continue
                     else:
+                        print("\tNo response from firmware request")
                         continue
                 except Exception as err:
-                    print("Exception detecting SensorBoard motor: {}".format(err))
+                    print("Exception detecting SensorBoard: {}".format(err))
         raise Exception("Sensor Board not found")
 
     def close(self):
@@ -109,8 +113,8 @@ class Sensors:
                 print("Error reading firmware")
             return False
         else:
-            light_buffer = self.s.read_command(28)
-            if len(light_buffer) == 28:
+            light_buffer = self.s.read_command(29)
+            if len(light_buffer) == 29:
                 checksum = self.s.to_num(light_buffer[-2], light_buffer[-1])
                 bytesum = sum([ord(a) for a in light_buffer[0:-2]])
                 if ord(light_buffer[0]) == 0x20 and bytesum == checksum:
