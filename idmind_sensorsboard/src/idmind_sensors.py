@@ -344,7 +344,7 @@ class SensorBoard:
                     # self.log("{} battery is low! Charge Them!".format(low_bat), 1, alert="error")
 
         except IOError as io_err:
-            raise io_err
+            self.log("Exception getting voltages", 3)
 
         # Light status
         try:
