@@ -150,7 +150,7 @@ class SensorBoard:
             
         """
         self.set_low_latency()
-        
+        return TriggerResponse(True, "Finished")
     ###################################################
     #           Raposa Sensor GET Functions           #
     ###################################################
