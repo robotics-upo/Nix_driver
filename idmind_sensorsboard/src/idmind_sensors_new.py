@@ -35,16 +35,11 @@ class SensorBoard:
         self.logging = rospy.Publisher("/idmind_logging", Log, queue_size=10)
         # Connect to sensorsboard
         connected = False
-        # Try to connect to given port. If fails, search in all available ports
+        # Search in all available ports until connection is achieved
         while not connected:
             try:
-                if len(address) > 0:
-                    self.log("Connecting to SensorsBoard on {}".format(address), 5)
-                    self.ser = IDMindSerial(addr=address, baudrate=baudrate, timeout=timeout)
-                    connected = True
-                else:
-                    self.search_connect()
-                    connected = True
+                self.search_connect()
+                connected = True
             except KeyboardInterrupt:
                 self.log("\tInterrupted by user", 5)
                 raise KeyboardInterrupt
