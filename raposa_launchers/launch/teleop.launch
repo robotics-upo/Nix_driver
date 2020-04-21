@@ -10,7 +10,7 @@
     <!-- Launch motors and sensors boards -->
     <node pkg="idmind_motorsboard" type="idmind_motors.py" name="idmind_motors" respawn="false" />
 
-    <node pkg="idmind_sensorsboard" type="idmind_sensors.py" name="idmind_sensors"/>
+    <node pkg="idmind_sensorsboard" type="idmind_sensors_new.py" name="idmind_sensors"/>
 
     <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen"/>
 

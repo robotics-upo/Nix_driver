@@ -1,4 +1,4 @@
 <launch>
-    <node pkg="idmind_sensorsboard" type="idmind_sensors.py" name="idmind_sensors" output="screen">
+    <node pkg="idmind_sensorsboard" type="idmind_sensors_new.py" name="idmind_sensors" output="screen">
     </node>
 </launch>

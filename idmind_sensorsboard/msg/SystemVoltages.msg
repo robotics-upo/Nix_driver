@@ -1,7 +1,5 @@
 std_msgs/Header header
-float64 electronic_battery
-float64 motor_battery
-float64 cable
-bool electronic_relay
-bool motor_relay
-bool cable_relay
+float64 electronic_voltage
+float64 motor_voltage
+float64 electronic_current
+float64 motor_current

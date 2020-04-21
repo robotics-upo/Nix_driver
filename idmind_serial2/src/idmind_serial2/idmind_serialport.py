@@ -138,9 +138,14 @@ class IDMindSerial(serial.Serial):
             try:
                 res = self.read(nr_bytes)
                 
-                for i in range(len(res)):
-                    print ord(res[i]),
-                print ("\n")
+                if self.verbose:
+                    if len(res) > 0:
+                        print("Reply: "),
+                        for i in range(len(res)):
+                            print ord(res[i]),
+                        print ("")
+                    else:
+                        print("No reply received")
 
                 return res
             except serial.SerialException as e:
