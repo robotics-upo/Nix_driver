@@ -127,9 +127,9 @@ class Sensors:
                 checksum = self.s.to_num(light_buffer[-2], light_buffer[-1])
                 bytesum = sum([ord(a) for a in light_buffer[0:-2]])
                 if ord(light_buffer[0]) == msg[0] and bytesum == checksum:
-                    self.voltages["motor_battery"] = self.s.to_num(light_buffer[1], light_buffer[2]) * 0.01
+                    self.voltages["motor_voltage"] = self.s.to_num(light_buffer[1], light_buffer[2]) * 0.01
                     self.voltages["motor_current"] = self.s.to_num(light_buffer[3], light_buffer[4]) * 0.01
-                    self.voltages["electronic_battery"] = self.s.to_num(light_buffer[5], light_buffer[6]) * 0.01           
+                    self.voltages["electronic_voltage"] = self.s.to_num(light_buffer[5], light_buffer[6]) * 0.01           
                     self.voltages["electronic_current"] = self.s.to_num(light_buffer[7], light_buffer[8]) * 0.01    
                     return self.voltages
                 else:
