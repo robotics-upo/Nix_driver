@@ -35,7 +35,9 @@ class Teleop:
         else:
             self.max_vel = rospy.get_param("/motors/max_vel", default=0.3)
             self.max_rot = rospy.get_param("/bot/max_rot", default=0.7)
-	
+        
+        self.switch_light = rospy.ServiceProxy('/idmind_sensors/switch_lights', Trigger)
+
         ################
         #  Navigation  #
         ################
@@ -46,9 +48,11 @@ class Teleop:
         #    self.toggle_joy = rospy.ServiceProxy("/idmind_navigation/toggle_joystick", Trigger)
         #except rospy.ROSException:
         #    rospy.logwarn("/idmind_navigation did not respond, assuming direct link to motorsboard")
-	self.last_time = rospy.Time.now()
-	self.republish = True
-	self.joy_received = False
+        self.last_time = rospy.Time.now()
+        self.republish = True
+        self.joy_received = False
+        self.light_srv = rospy.ServiceProxy('/idmind_sensors/switch_lights', Trigger)
+
         ####################
         #  Robot Features  #
         ####################
@@ -62,35 +66,45 @@ class Teleop:
         rospy.Subscriber("/joy", Joy, self.update_joy)
 
         rospy.loginfo("{} is initialized".format(rospy.get_name()))
-	
+    
     def update_joy(self, msg):
-	self.last_time = rospy.Time.now()
-	
-	self.joy_received = True
-        
-	new_vel = Twist()
+
+        self.last_time = rospy.Time.now()
+        self.joy_received = True
+        new_vel = Twist()
         new_vel.linear.x = msg.axes[1] * self.max_vel
+        
         if self.kinematics == "2wd":
             new_vel.angular.z = msg.axes[0] * self.max_rot
         elif self.kinematics == "omni":
             new_vel.linear.y = msg.axes[3] * self.max_vel
             new_vel.angular.z = msg.axes[0] * self.max_rot
         self.twist = new_vel
-	
+    
         self.arm_goal = self.arm_position - 10 * msg.axes[5]
         if msg.buttons[4] and self.arm_goal < SET_ARM_MAX:
-	    self.arm_goal +=ARM_INCR
-	if msg.buttons[5] and self.arm_goal > SET_ARM_MIN:
-	    self.arm_goal -=ARM_INCR
+            self.arm_goal +=ARM_INCR
 
-        if msg.buttons[9] == 1:
-            #self.toggle_joy(TriggerRequest()) # Esto daba el error que no existia toggle joy
-	    if self.republish:
-		self.republish = False
-		rospy.logwarn("republish to false")
-	    else:
-		self.republish = True
-		rospy.logwarn("republish to true")
+        if msg.buttons[7]:
+            rospy.wait_for_service('/idmind_sensors/switch_lights')  
+            try:
+                req = TriggerRequest()
+                resp1 = self.light_srv(req)
+            except rospy.ServiceException, e:
+                print "Service call failed: %s"%e
+
+        if msg.buttons[5] and self.arm_goal > SET_ARM_MIN:
+            self.arm_goal -=ARM_INCR
+
+            #if msg.buttons[9] == 1:
+            #    self.toggle_joy(TriggerRequest()) # Esto daba el error que no existia toggle joy
+        if msg.buttons[6]:
+            if self.republish:
+                self.republish = False
+                rospy.logwarn("republish to false")
+            else:
+                self.republish = True
+                rospy.logwarn("republish to true")
 
     def handle_arm(self, msg):
         self.arm_position = msg.data
@@ -99,11 +113,10 @@ class Teleop:
         r = rospy.Rate(self.control_freq)
         while not rospy.is_shutdown():
             try:
-		if self.republish:
+                if self.republish:
                     self.twist_pub.publish(self.twist)
-                
-		self.arm_pub.publish(self.arm_goal)
-                r.sleep()
+                    self.arm_pub.publish(self.arm_goal)
+                    r.sleep()
             except KeyboardInterrupt:
                 break
 
