@@ -36,7 +36,8 @@ class Teleop:
             self.max_vel = rospy.get_param("/motors/max_vel", default=0.3)
             self.max_rot = rospy.get_param("/bot/max_rot", default=0.7)
         
-        self.switch_light = rospy.ServiceProxy('/idmind_sensors/switch_lights', Trigger)
+        self.enable_auto_switch_light = rospy.ServiceProxy('/lights_switcher/switch_auto_lights', Trigger)
+
 
         ################
         #  Navigation  #
@@ -84,6 +85,15 @@ class Teleop:
         self.arm_goal = self.arm_position - 10 * msg.axes[5]
         if msg.buttons[4] and self.arm_goal < SET_ARM_MAX:
             self.arm_goal +=ARM_INCR
+
+        if msg.buttons[2]:
+            rospy.wait_for_service('/lights_switcher/switch_auto_lights')  
+            try:
+                req = TriggerRequest()
+                resp1 = self.enable_auto_switch_light(req)
+            except rospy.ServiceException, e:
+                print "Service call failed: %s"%e
+
 
         if msg.buttons[7]:
             rospy.wait_for_service('/idmind_sensors/switch_lights')  
