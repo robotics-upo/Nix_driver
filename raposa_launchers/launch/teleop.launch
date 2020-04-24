@@ -32,4 +32,6 @@
 
     <node pkg="idmind_teleop" type="joy_controller.py" name="idmind_teleop" />
 
+    <node pkg="raposa_launchers" type="blink_lights.sh" name="blink_lights"/>
+    
 </launch>
