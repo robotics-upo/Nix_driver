@@ -39,8 +39,11 @@ class IDMindOdometry:
         self.base_width = rospy.get_param("/bot/base_width", default=0.26)
         self.simulation = rospy.get_param("/simulation", default=False)
         self.control_freq = rospy.get_param("/move_base/controller_frequency", default=20.)
-	self.use_imu = rospy.get_param("/use_imu", default=True)   # UPO: Added param to not use the IMU
+	self.use_imu = rospy.get_param("/use_imu", default=0)   # UPO: Added param to not use the IMU, 0 means disable, 1 full imu with magnetometer and 2 gyroscope(lidar imu as example)
+	
 	self.publish_tf = rospy.get_param("/publish_tf", default=True) # UPO: added to switch between mapping and navigation
+	self.yaw = 0
+
         if not self.simulation:
             #########################
             #  Hardware connection  #
@@ -88,8 +91,12 @@ class IDMindOdometry:
         rospy.Service("/idmind_navigation/calibrate_imu", Trigger, self.calibrate_imu)
         rospy.Service("/idmind_navigation/display_calib", Trigger, self.display_calib)
         self.imu_reading = Imu()
+	
         if not self.simulation:
-            rospy.Subscriber("/imu", Imu, self.update_imu, queue_size=1)
+	    if self.use_imu == 1:
+                rospy.Subscriber("/imu", Imu, self.update_imu, queue_size=1)
+            elif self.use_imu == 2:
+                rospy.Subscriber("/os1_cloud_node/imu", Imu, self.update_imu_gyroscope, queue_size=1)
         else:
             rospy.Subscriber("/gazebo/imu", Imu, self.update_imu)
 
@@ -98,7 +105,7 @@ class IDMindOdometry:
         ##############
         self.new_encoder = False
         self.odom_time = rospy.Time.now()
-
+	self.last_imu_time = None
         # Current Odom state
         self.x = 0
         self.y = 0
@@ -161,6 +168,18 @@ class IDMindOdometry:
 
     def update_imu(self, msg):
         self.imu_reading = msg
+    def update_imu_gyroscope(self, msg):
+	
+	if self.last_imu_time == None:
+	    self.last_imu_time = rospy.Time.now()
+	    self.theta = 0
+            self.gyro_bias = msg.angular_velocity.z
+	    return
+
+	curr_time = rospy.Time.now()
+	
+	self.theta += (msg.angular_velocity.z-self.gyro_bias) * (curr_time - self.last_imu_time).to_sec()
+	self.last_imu_time = curr_time
 
     def log(self, msg, msg_level, log_level=-1, alert="info"):
         if VERBOSE >= msg_level:
@@ -228,7 +247,7 @@ class IDMindOdometry:
 
         # Check if IMU readings can be used. If yes, dth is set
         try:
-            if self.use_imu:
+            if self.use_imu == 1:
  	      if (rospy.Time.now() - self.imu_reading.header.stamp).to_sec() < 1.:
                 # q = self.imu_reading.orientation
                 ###################
@@ -272,9 +291,9 @@ class IDMindOdometry:
 	      else:
 	        dth = 0
 		use_imu = False
-            else:
-                dth = 0
-                use_imu = False
+            elif self.use_imu == 2:
+                dth = self.theta - self.th
+                use_imu = True
         except Exception as imu_err:
             self.log("Error in reading IMU messages: {}".format(imu_err), 3, alert="warn")
             use_imu = False
@@ -362,10 +381,10 @@ class IDMindOdometry:
                 if dth < - pi:
                     dth = dth + 2 * pi
 
-                if self.th > pi:
-                    self.th = self.th - 2 * pi
-                if self.th < - pi:
-                    self.th = self.th + 2 * pi
+                #if self.th > pi:
+                #    self.th = self.th - 2 * pi
+                #if self.th < - pi:
+                #    self.th = self.th + 2 * pi
 
                 dx = dlinear_x * cos(self.th + dth) - dlinear_y * sin(self.th + dth)
                 dy = dlinear_x * sin(self.th + dth) + dlinear_y * cos(self.th + dth)
@@ -420,7 +439,7 @@ class IDMindOdometry:
     def start(self):
         r = rospy.Rate(self.control_freq)
 
-	if self.use_imu:
+	if self.use_imu == 1:
         	self.calibrate_imu(TriggerRequest())
         while not rospy.is_shutdown():
             try:
