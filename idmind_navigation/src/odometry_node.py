@@ -39,10 +39,10 @@ class IDMindOdometry:
         self.base_width = rospy.get_param("/bot/base_width", default=0.26)
         self.simulation = rospy.get_param("/simulation", default=False)
         self.control_freq = rospy.get_param("/move_base/controller_frequency", default=20.)
-	self.use_imu = rospy.get_param("/use_imu", default=0)   # UPO: Added param to not use the IMU, 0 means disable, 1 full imu with magnetometer and 2 gyroscope(lidar imu as example)
+	    self.use_imu = rospy.get_param("/use_imu", default=0)   # UPO: Added param to not use the IMU, 0 means disable, 1 full imu with magnetometer and 2 gyroscope(lidar imu as example)
 	
-	self.publish_tf = rospy.get_param("/publish_tf", default=True) # UPO: added to switch between mapping and navigation
-	self.yaw = 0
+	    self.publish_tf = rospy.get_param("/publish_tf", default=True) # UPO: added to switch between mapping and navigation
+	    self.yaw = 0
 
         if not self.simulation:
             #########################
@@ -105,17 +105,21 @@ class IDMindOdometry:
         ##############
         self.new_encoder = False
         self.odom_time = rospy.Time.now()
-	self.last_imu_time = None
+	    self.last_imu_time = None
         # Current Odom state
         self.x = 0
         self.y = 0
+        self.z = 0
         self.th = 0
+        self.roll = 0
+        self.pitch = 0
         self.vx = 0
         self.vy = 0
+        self.vz = 0
         self.vth = 0
 
         # Publish odometry and broadcast odometry
-	self.odom_broadcast = TransformBroadcaster()
+	    self.odom_broadcast = TransformBroadcaster()
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
 
         self.tf_buffer = Buffer()
@@ -170,16 +174,16 @@ class IDMindOdometry:
         self.imu_reading = msg
     def update_imu_gyroscope(self, msg):
 	
-	if self.last_imu_time == None:
-	    self.last_imu_time = rospy.Time.now()
-	    self.theta = 0
+	    if self.last_imu_time == None:
+	        self.last_imu_time = rospy.Time.now()
+	        self.theta = 0
             self.gyro_bias = msg.angular_velocity.z
-	    return
-
-	curr_time = rospy.Time.now()
-	
-	self.theta += (msg.angular_velocity.z-self.gyro_bias) * (curr_time - self.last_imu_time).to_sec()
-	self.last_imu_time = curr_time
+	        return
+    
+	    curr_time = rospy.Time.now()
+    
+	    self.theta += (msg.angular_velocity.z-self.gyro_bias) * (curr_time - self.last_imu_time).to_sec()
+	    self.last_imu_time = curr_time
 
     def log(self, msg, msg_level, log_level=-1, alert="info"):
         if VERBOSE >= msg_level:
@@ -293,6 +297,12 @@ class IDMindOdometry:
 		use_imu = False
             elif self.use_imu == 2:
                 dth = self.theta - self.th
+                a_x = self.imu_reading.linear_acceleration.x
+                a_y = self.imu_reading.linear_acceleration.y
+                a_z = self.imu_reading.linear_acceleration.z
+
+                pitch = atan(a_x/sqrt(a_y*a_y + a_z*a_z) )
+                roll =  atan(a_y/sqrt(a_x*a_x + a_z*a_z) )
                 use_imu = True
         except Exception as imu_err:
             self.log("Error in reading IMU messages: {}".format(imu_err), 3, alert="warn")
@@ -348,9 +358,9 @@ class IDMindOdometry:
                     self.wheel_odom["front_right"] = 0.
                     self.wheels_lock.release()
 
-                    dlinear_x = (dright - dleft) / 2
+                    dlinear_x = (dright - dleft) / 2 * cos(self.roll)
                     dlinear_y = 0
-
+                    dlinear_z =  (dright - dleft) / 2 * sin(self.roll)
                     # If IMU is not usable, use simulation odometry readings
                     if not use_imu:
                         # If not, use wheel odometry to compute rotation
@@ -388,7 +398,7 @@ class IDMindOdometry:
 
                 dx = dlinear_x * cos(self.th + dth) - dlinear_y * sin(self.th + dth)
                 dy = dlinear_x * sin(self.th + dth) + dlinear_y * cos(self.th + dth)
-
+                dz = dlinear_z 
             except Exception as err:
                 rospy.logfatal("{}: Exception computing odometry in real robot: {}".format(rospy.get_name(), err))
                 return
@@ -398,10 +408,12 @@ class IDMindOdometry:
             # Compute odometry positions
             self.x = self.x + dx
             self.y = self.y + dy
+            self.z = self.z + dz
             self.th = self.th + dth
-
+            
             self.vx = dx / (self.odom_time - last_time).to_sec()
             self.vy = dy / (self.odom_time - last_time).to_sec()
+            self.vz = dz / (self.odom_time - last_time).to_sec()
             self.vth = dth / (self.odom_time - last_time).to_sec()
 
             # Build Transform message for Broadcast
@@ -413,7 +425,7 @@ class IDMindOdometry:
             transf_msg.transform.translation.x = self.x
             transf_msg.transform.translation.y = self.y
 
-            q = transformations.quaternion_from_euler(0, 0, self.th)
+            q = transformations.quaternion_from_euler(self.roll, self.pitch, self.th)
             transf_msg.transform.rotation = Quaternion(*q)
             if self.publish_tf:
                 self.odom_broadcast.sendTransform(transf_msg)
