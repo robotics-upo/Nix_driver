@@ -1,7 +1,9 @@
 <launch>
 
     <arg name="only_driver_pc" default="false"/>
-    <arg name="imu" default="razor" />
+    <arg name="imu" default="razor" />	
+    <arg name="twist_input_topic" default="/cmd_vel_joy"/>
+    
 
     <!-- Load configuration from YAML -->
     <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
@@ -15,7 +17,7 @@
     <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen"/>
 
     <node pkg="smoother" type="smoother_node" name="smoother_node">
-        <remap from="/cmd_vel" to="/cmd_vel_joy" if="$(arg only_driver_pc)"/>
+	<param name="input_twist_topic" value="$(arg twist_input_topic)"/>
         <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />
     </node>
 
