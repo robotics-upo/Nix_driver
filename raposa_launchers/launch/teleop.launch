@@ -3,7 +3,7 @@
     <arg name="only_driver_pc" default="false"/>
     <arg name="imu" default="razor" />	
     <arg name="twist_input_topic" default="/cmd_vel_joy"/>
-    
+    <arg name="publish_tf" default="true"/>
 
     <!-- Load configuration from YAML -->
     <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
@@ -14,7 +14,9 @@
 
     <node pkg="idmind_sensorsboard" type="idmind_sensors_new.py" name="idmind_sensors"/>
 
-    <node pkg="idmind_navigation" type="odometry_node.py" name="odometry_node" output="screen"/>
+    <node pkg="idmind_navigation" type="upo_odometry.py" name="odometry_node" output="screen">
+        <param name="publish_tf" value="$(arg publish_tf)"/>
+    </node>
 
     <node pkg="smoother" type="smoother_node" name="smoother_node">
 	<param name="input_twist_topic" value="$(arg twist_input_topic)"/>
