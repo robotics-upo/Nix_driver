@@ -10,7 +10,7 @@ from tf_conversions import transformations
 from idmind_motorsboard.msg import WheelsMB
 from numpy import pi, sin, cos, sqrt
 from geometry_msgs.msg import TransformStamped, Quaternion
-from std_srvs.srv import Trigger, TriggerResponse, TriggerRequest
+from std_srvs.srv import Trigger, TriggerResponse, TriggerRequest, Empty, EmptyResponse
 from tf2_ros import Buffer, TransformBroadcaster, TransformListener
 
 from filterpy.kalman import ExtendedKalmanFilter as EKF
@@ -109,7 +109,7 @@ class IDMindOdometry:
         # Service for the calibration of IMU information
         self.imu_q_offset = Quaternion()
         self.imu_q_offset.w = 1.
-        rospy.Service("/idmind_navigation/calibrate_imu", Trigger, self.calibrate_imu)
+        rospy.Service("/idmind_navigation/calibrate_imu", Empty, self.calibrate_imu)
         rospy.Service("/idmind_navigation/display_calib", Trigger, self.display_calib)
         self.imu_reading = Imu()
         rospy.Subscriber("/imu", Imu, self.update_imu, queue_size=1)
@@ -306,7 +306,7 @@ class IDMindOdometry:
         self.calib_gz = []
         self.ekf_init = False
         self.last_imu_time = None
-        return TriggerResponse(True, "Calibration being performed")
+        return EmptyResponse()
         
     def display_calib(self, _req):
          return TriggerResponse(True, "{}".format(self.imu_bias))
