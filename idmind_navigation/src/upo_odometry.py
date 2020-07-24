@@ -67,7 +67,7 @@ class IDMindOdometry:
         #  Robot Parameters  #
         ######################
         self.control_freq = rospy.get_param("/move_base/controller_frequency", default=20.)
-        self.publish_tf = rospy.get_param("/publish_tf", default=True) # UPO: added to switch between mapping and navigation
+        self.publish_tf = rospy.get_param("/publish_tf", default=False) # UPO: added to switch between mapping and navigation
      
         
         # EKF related stuff
