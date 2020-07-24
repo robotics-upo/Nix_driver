@@ -9,7 +9,7 @@ export ROS_HOSTNAME=raposa-idmind
 export ROS_IP=192.168.8.3
 rosclean purge -y
 #Check if we have ping to the raposa-nav host:
-
+sleep 10
 ping -c1 raposa-nav
 if [ $? -eq 0 ]
 then # If there is ping, wait for ros master
