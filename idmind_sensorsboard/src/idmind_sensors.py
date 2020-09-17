@@ -3,6 +3,7 @@
 import rospy
 from idmind_robot.msg import Log
 from std_msgs.msg import Bool
+from std_msgs.msg import Float32
 from std_srvs.srv import Trigger, TriggerResponse
 from idmind_sensorsboard.msg import SystemVoltages
 from idmind_serial2.idmind_serialport import IDMindSerial
@@ -61,6 +62,9 @@ class SensorBoard:
         ################
         self.log("Setting ROS Publishers", 7)
         self.pub_volt = rospy.Publisher("/idmind_sensors/voltages", SystemVoltages, queue_size=10)
+        # Added topics with std msgs to avoid external nodes depending on systemvoltages messages
+        self.pub_elec_volt = rospy.Publisher("/idmind_sensors/electric_voltages", Float32, queue_size=1)
+        self.pub_motors_volt = rospy.Publisher("/idmind_sensors/motors_voltages", Float32, queue_size=1)
         self.pub_lights = rospy.Publisher("/idmind_sensors/lights", Bool, queue_size=10)
 
         ##################
@@ -338,6 +342,10 @@ class SensorBoard:
                 v_msg.motor_relay = self.relays["motor_relay"]
                 v_msg.cable_relay = self.relays["cable_relay"]
                 self.pub_volt.publish(v_msg)
+                volt = Float32(self.voltages["electronic_battery"])
+                self.pub_elec_volt.publish(volt)
+                volt = Float32(self.voltages["motor_battery"])
+                self.pub_motors_volt.publish(volt)
                 plugged = v_msg.cable_relay or v_msg.cable > 16
                 if (v_msg.motor_battery < MIN_VOL or v_msg.electronic_battery < MIN_VOL) and not plugged:
                     low_bat = "Motor" if v_msg.motor_battery < v_msg.electronic_battery else "Electronic"
