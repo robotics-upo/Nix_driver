@@ -3,6 +3,7 @@
 import rospy
 from idmind_robot.msg import Log
 from std_msgs.msg import Bool
+from std_msgs.msg import Float32
 from std_srvs.srv import Trigger, TriggerResponse
 from idmind_sensorsboard.msg import SystemVoltages
 from sensors_drivers import Sensors
@@ -33,6 +34,9 @@ class SensorBoard:
         ################
         self.log("Setting ROS Publishers", 7)
         self.pub_volt = rospy.Publisher("/idmind_sensors/voltages", SystemVoltages, queue_size=10)
+        # Added topics with std msgs to avoid external nodes depending on systemvoltages messages
+        self.pub_elec_volt = rospy.Publisher("/idmind_sensors/electric_voltages", Float32, queue_size=1)
+        self.pub_motors_volt = rospy.Publisher("/idmind_sensors/motors_voltages", Float32, queue_size=1)
         self.pub_lights = rospy.Publisher("/idmind_sensors/lights", Bool, queue_size=10)
 
         ##################
@@ -76,6 +80,10 @@ class SensorBoard:
                 v_msg.electronic_voltage = self.sensors.voltages["electronic_voltage"]
                 v_msg.motor_current = self.sensors.voltages["motor_current"]
                 v_msg.electronic_current = self.sensors.voltages["electronic_current"]
+		volt = Float32(self.sensors.voltages["electronic_voltage"])
+                self.pub_elec_volt.publish(volt)
+                volt = Float32(self.sensors.voltages["motor_voltage"])
+                self.pub_motors_volt.publish(volt)
                 self.pub_volt.publish(v_msg)
         except IOError as io_err:
             self.log("Exception getting voltages", 3)
