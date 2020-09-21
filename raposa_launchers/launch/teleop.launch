@@ -8,17 +8,19 @@
     <!-- Load configuration from YAML -->
     <rosparam command="load" file="$(find idmind_robot)/cfg/idmind_robot.yaml" />
     <rosparam command="load" file="$(find idmind_motorsboard)/cfg/idmind_motors.yaml" />
-
+	
     <!-- Launch motors and sensors boards -->
     <node pkg="idmind_motorsboard" type="idmind_motors.py" name="idmind_motors" respawn="false" />
 
     <node pkg="idmind_sensorsboard" type="idmind_sensors_new.py" name="idmind_sensors"/>
 
-    <node pkg="idmind_navigation" type="upo_odometry.py" name="odometry_node" output="screen">
-        <param name="publish_tf" value="$(arg publish_tf)"/>
-	<remap from="imu" to="/os1_cloud_node/imu"/>  
-   </node>
-
+<!--    <node pkg="idmind_navigation" type="upo_odometry.py" name="odometry_node" output="screen">-->
+ <!--       <param name="publish_tf" value="$(arg publish_tf)"/>-->
+<!--	<remap from="imu" to="/os1_cloud_node/imu"/>-->  
+  <!-- </node> -->
+    <node pkg="timed_roslaunch" type="timed_roslaunch.sh" args="5 raposa_launchers odometry.launch" name="odometry_timed_roslaunch" />
+    <node pkg="timed_roslaunch" type="timed_roslaunch.sh" args="5 raposa_launchers pub_joy.launch" name="pub_joy_shut_up" />
+    
     <node pkg="smoother" type="smoother_node" name="smoother_node">
 	<param name="input_twist_topic" value="$(arg twist_input_topic)"/>
         <rosparam command="load" file="$(find raposa_launchers)/cfg/smoother.yaml" />

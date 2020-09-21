@@ -1,0 +1,9 @@
+<launch>
+
+	<arg name="publish_tf" default="false"/>
+ <node pkg="idmind_navigation" type="upo_odometry.py" name="odometry_node" output="screen">
+        <param name="publish_tf" value="$(arg publish_tf)"/>
+	<remap from="imu" to="/os1_cloud_node/imu"/>  
+   </node>
+
+</launch>
