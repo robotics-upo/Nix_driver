@@ -32,10 +32,10 @@ class Smoother
         nh->param("max_linear_vel", lin_max_vel, (float)0.5);
         nh->param("min_linear_vel", lin_min_vel, (float)-0.5);
         lin_min_vel*=-1;
-        nh->param("linear_max_acc", lin_acc, (float)0.1);
-        nh->param("linear_max_dacc", lin_decc, (float)0.2);
-        nh->param("angular_max_acc", ang_acc, (float)0.25);
-        nh->param("max_rot_vel", ang_max_speed, (float)2);
+        nh->param("linear_max_acc", lin_acc, (float)0.001);
+        nh->param("linear_max_dacc", lin_decc, (float)0.1);
+        nh->param("angular_max_acc", ang_acc, (float)0.2);
+        nh->param("max_rot_vel", ang_max_speed, (float)1.5);
         nh->param("exp_ct", exp_ct, (float)0.03);
         nh->param("w_limit", w_limit, (float)50);
         nh->param("debug",debug, (bool)false);

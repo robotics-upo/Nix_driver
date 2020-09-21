@@ -5,7 +5,7 @@ min_linear_vel: 0.35 #Default params
   
 max_rot_vel: 1.2
 
-linear_max_acc: 0.05
+linear_max_acc: 0.02
 linear_max_dacc: 0.05
   
 angular_max_acc: 0.25
