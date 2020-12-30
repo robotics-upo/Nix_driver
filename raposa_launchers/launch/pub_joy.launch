@@ -1,0 +1,5 @@
+<launch>
+
+	<node pkg="raposa_launchers" type="pub_joy.sh" name="pub_joy"/>
+
+</launch>
