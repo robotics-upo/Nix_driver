@@ -76,7 +76,7 @@ class IDMindOdometry:
         self.calib_gx = []
         self.calib_gy = []
         self.calib_gz = []
-        self.min_calib_size = rospy.get_param('~min_calib_size', default = 200)
+        self.min_calib_size = rospy.get_param('~min_calib_size', default = 1000)
         
         self.acc_dev = rospy.get_param("~acc_dev", default=0.01)
         self.gyr_dev = rospy.get_param("~gyr_dev", default=0.005)
@@ -153,7 +153,7 @@ class IDMindOdometry:
         
     def initialize(self, msg):
 		# double gx_m, gy_m, gz_m, gx_m2, gy_m2, gz_m2, gx_d, gy_d, gz_d; 
-		# Do we have enought data for IMU initilaization ?
+		# Do we have enought data for IMU initilaization or BIAS reestimation ?
         self.calib_data.append(msg)
         self.calib_gx.append(msg.angular_velocity.x)
         self.calib_gy.append(msg.angular_velocity.y)
@@ -176,55 +176,67 @@ class IDMindOdometry:
         # The state is the angular variables and the gyro bias. 
         # A Observ. is the accelerometer reading.
         # The action is the gyro reading 
-        self.ekf = EKF(dim_x=6, dim_u=3, dim_z=3) 
-        dt = self.dt
-        # Matrices of the system
-        self.ekf.F = array([[1, 0, 0, -dt, 0, 0],
-                            [0, 1, 0, 0, -dt, 0],
-                            [0, 0, 1, 0, 0, -dt],
-                            [0, 0, 0, 1, 0, 0  ],
-                            [0, 0, 0, 0, 1, 0  ],
-                            [0, 0, 0, 0, 0, 1  ]]) 
-        self.ekf.B = array([[1, 0, 0],
-                            [0, 1, 0],
-                            [0, 0, 1],
-                            [0, 0, 0],
-                            [0, 0, 0],
-                            [0, 0, 0]])*dt
-        # Initial covariance
-        self.ekf.P = array([[pi/2, 0, 0, 0, 0, 0],
-                            [0, pi/2, 0, 0, 0, 0],
-                            [0, 0, pi/2, 0, 0, 0],
-                            [0, 0, 0, dt**2, 0, 0  ],
-                            [0, 0, 0, 0, dt**2, 0  ],
-                            [0, 0, 0, 0, 0, dt**2  ]])
+        if not(self.ekf_init):
+            self.ekf = EKF(dim_x=6, dim_u=3, dim_z=3) 
+            dt = self.dt
+            # Matrices of the system
+            self.ekf.F = array([[1, 0, 0, -dt, 0, 0],
+                                [0, 1, 0, 0, -dt, 0],
+                                [0, 0, 1, 0, 0, -dt],
+                                [0, 0, 0, 1, 0, 0  ],
+                                [0, 0, 0, 0, 1, 0  ],
+                                [0, 0, 0, 0, 0, 1  ]]) 
+            self.ekf.B = array([[1, 0, 0],
+                                [0, 1, 0],
+                                [0, 0, 1],
+                                [0, 0, 0],
+                                [0, 0, 0],
+                                [0, 0, 0]])*dt
+            # Initial covariance
+            self.ekf.P = array([[pi/2, 0, 0, 0, 0, 0],
+                                [0, pi/2, 0, 0, 0, 0],
+                                [0, 0, pi/2, 0, 0, 0],
+                                [0, 0, 0, dt**2, 0, 0  ],
+                                [0, 0, 0, 0, dt**2, 0  ],
+                                [0, 0, 0, 0, 0, dt**2  ]])
 
-        # Measurement noise jac
-        self.ekf.R = eye(3) * (self.acc_dev ** 2)
-        
-		# Initialize sensor variances
-        gyr_dev = self.gyr_dev
-        bias_dev = self.bias_dev
-        
-        # Process noise
-        self.ekf.Q = array([[gyr_dev**2 * dt**2, 0, 0, 0, 0, 0],
-                            [0, gyr_dev**2 * dt**2, 0, 0, 0, 0],
-                            [0, 0, gyr_dev**2 * dt**2, 0, 0, 0],
-                            [0, 0, 0, bias_dev**2 * dt, 0, 0  ],
-                            [0, 0, 0, 0, bias_dev**2 * dt, 0  ],
-                            [0, 0, 0, 0, 0, bias_dev**2 * dt  ]])
-        
-		
-		# Initialize state vector x = [rx, ry, rz, gbx, gby, gbz]
-        self.ekf.x = array([0, 0, self.theta, self.gx_m, self.gy_m, self.gz_m])
-		
-		# Check if calibration is good enough
-        if self.gx_d < self.bias_th and self.gy_d < self.bias_th and self.gz_d < self.bias_th: 
-            return True
-        else: 
-            # print (self.gx_d )
-            return False
-
+            # Measurement noise jac
+            self.ekf.R = eye(3) * (self.acc_dev ** 2)
+            
+            # Initialize sensor variances
+            gyr_dev = self.gyr_dev
+            bias_dev = self.bias_dev
+            
+            # Process noise
+            self.ekf.Q = array([[gyr_dev**2 * dt**2, 0, 0, 0, 0, 0],
+                                [0, gyr_dev**2 * dt**2, 0, 0, 0, 0],
+                                [0, 0, gyr_dev**2 * dt**2, 0, 0, 0],
+                                [0, 0, 0, bias_dev**2 * dt, 0, 0  ],
+                                [0, 0, 0, 0, bias_dev**2 * dt, 0  ],
+                                [0, 0, 0, 0, 0, bias_dev**2 * dt  ]])
+            
+            
+            # Initialize state vector x = [rx, ry, rz, gbx, gby, gbz]
+            self.ekf.x = array([0, 0, self.theta, self.gx_m, self.gy_m, self.gz_m])
+            
+            
+            if self.gx_d < self.bias_th and self.gy_d < self.bias_th and self.gz_d < self.bias_th: 
+                self.reset_calibration()
+                return True
+            else: 
+                # print (self.gx_d )
+                return False
+        else:
+            # Check if calibration is good enough --> reset BIAS 
+            if self.gz_d < self.bias_th: 
+                print ('Reseting bias z: ', self.gz_d)
+                for i in range(5):
+                    self.ekf.P[5,i] = 0
+                    self.ekf.P[i,5] = 0     # Reset co-variances
+                self.ekf.P[5,5] = dt**2
+                self.ekf.x[5] = self.gz_d
+                self.reset_calibration()
+                return True
 
     #################################
     #  Callbacks and other updates  #
@@ -240,11 +252,16 @@ class IDMindOdometry:
         """
         try:
             self.wheels_lock.acquire()
-            self.wheel_odom["front_right"] = self.wheel_odom["front_right"] + msg.front_right
-            self.wheel_odom["front_left"] = self.wheel_odom["front_left"] + msg.front_left
-            self.wheel_odom["back_right"] = self.wheel_odom["back_right"] + msg.back_right
-            self.wheel_odom["back_left"] = self.wheel_odom["back_left"] + msg.back_left
+            a = self.wheel_odom["front_right"] = self.wheel_odom["front_right"] + msg.front_right
+            b = self.wheel_odom["front_left"] = self.wheel_odom["front_left"] + msg.front_left
+            c = self.wheel_odom["back_right"] = self.wheel_odom["back_right"] + msg.back_right
+            d = self.wheel_odom["back_left"] = self.wheel_odom["back_left"] + msg.back_left
             self.wheels_lock.release()
+            
+            # If there is any measure != 0 --> reset accumulator for bias
+            if (a != 0 and b != 0 and c != 0 and d != 0):
+                print (' Resetting calibration')
+                reset_calibration()
         except AttributeError as a_err:
             self.log("Lock is probably not defined yet: {}".format(a_err), 7)
 
@@ -260,9 +277,9 @@ class IDMindOdometry:
         self.last_imu_time = rospy.Time.now()
         
         self.imu_reading = msg
-        if not (self.ekf_init):
-            self.ekf_init = self.initialize(msg)
-        else:
+        
+        self.ekf_init = self.initialize(msg) # Always initialize (continuous initialization)
+        if self.ekf_init:
             # Perform EKF update and predict stages
             # self.log("Performing EKF update and predict", 1)
             a_x = msg.linear_acceleration.x
@@ -273,7 +290,6 @@ class IDMindOdometry:
             a_y = a_y / a
             a_z = a_z / a
             z = array([a_x, a_y, a_z])
-            
             
             u_gyro = array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
             
@@ -300,13 +316,17 @@ class IDMindOdometry:
             self.logging.publish(rospy.Time.now().to_sec(), rospy.get_name(), msg)
 
     def calibrate_imu(self, _req):
+        self.reset_calibration()
+        self.ekf_init = False
+        self.last_imu_time = None
+        return EmptyResponse()
+    
+    def reset_calibration(self):
         self.calib_data = []
         self.calib_gx = []
         self.calib_gy = []
         self.calib_gz = []
-        self.ekf_init = False
-        self.last_imu_time = None
-        return EmptyResponse()
+        
         
     def display_calib(self, _req):
          return TriggerResponse(True, "{}".format(self.imu_bias))
