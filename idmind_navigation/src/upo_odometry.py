@@ -229,12 +229,12 @@ class IDMindOdometry:
         else:
             # Check if calibration is good enough --> reset BIAS 
             if self.gz_d < self.bias_th: 
-                print ('Reseting bias z: ', self.gz_d)
+                print ('Reseting bias z: ', self.gz_m)
                 for i in range(5):
                     self.ekf.P[5,i] = 0
                     self.ekf.P[i,5] = 0     # Reset co-variances
                 self.ekf.P[5,5] = dt**2
-                self.ekf.x[5] = self.gz_d
+                self.ekf.x[5] = self.gz_m
                 self.reset_calibration()
                 return True
 
