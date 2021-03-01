@@ -10,7 +10,6 @@
     <depend>rospy</depend>
     <depend>joy</depend>
     <depend>idmind_imu</depend>
-    <depend>move_base</depend>
     <depend>nav_msgs</depend>
     <depend>geometry_msgs</depend>
     <depend>std_msgs</depend>
